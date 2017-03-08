@@ -315,7 +315,7 @@
 		$pidiscsi = "Missing"
 		$pidfc = "Missing"
 		Write-Progress -Activity "Checking for MPIO" -Status "Checking..."
-		$mpioenabled = Get-WindowsOptionalFeature �Online �FeatureName MultiPathIO|Select-Object state
+		$mpioenabled = Get-WindowsOptionalFeature -Online -FeatureName MultiPathIO|Select-Object state
 		Write-Progress -Activity "Checking for MPIO" -Status "Checking..." -Completed
 		if (!$mpioenabled){$mpioenabled = "Disabled or Missing"} Else {$mpioenabled = $mpioenabled.state}
 		If ($mpioenabled -eq "Enabled"){
@@ -365,7 +365,7 @@
 		$EachLog | Add-Member -Type NoteProperty -Name SAN-MPIO -Value $mpioenabled
 
 		#Show MPIO Requirement
-		if ($mpioenabled -ne "Enabled") {write-host "`r`nMPIO Enabled = $mpioenabled `t`t`t`t<== MPIO must be enabled" -foregroundcolor red;$CHANGES += "Enable-WindowsOptionalFeature �Online �FeatureName MultiPathIO -NoRestart`n"} Else {write-host "`r`nMPIO Enabled = $mpioenabled"}
+		if ($mpioenabled -ne "Enabled") {write-host "`r`nMPIO Enabled = $mpioenabled `t`t`t`t<== MPIO must be enabled" -foregroundcolor red;$CHANGES += "Enable-WindowsOptionalFeature -Online -FeatureName MultiPathIO -NoRestart`n"} Else {write-host "`r`nMPIO Enabled = $mpioenabled"}
 		
 		#Suggest Tegile VID/PID, and add commands to $CHANGES after first checking if MPIO cmdlet exists
 		$mpiocmdlet = (get-command New-MSDSMSupportedHW -ErrorAction SilentlyContinue).Name
