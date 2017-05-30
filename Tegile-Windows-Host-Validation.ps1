@@ -6,12 +6,6 @@
 		$iscsi,
 		[Parameter()]
 		[switch]
-		$bfs,
-		[Parameter()]
-		[switch]
-		$nobfs,
-		[Parameter()]
-		[switch]
 		$tdps,
 		[Parameter()]
 		[Switch]
@@ -33,18 +27,17 @@
 		$Recommended_RetryInterval = "1"
 		$Recommended_DiskTimeoutValue = "180"
 		# iSCSI-Specific Settings:
-		$Recommended_MaxRequestHoldTime = "180"
+		$Recommended_MaxRequestHoldTime = "60"
 		$Recommended_LinkDownTime = "15"
-		$Recommended_BFSiSCSIioSize = "131072"
-		$Recommended_NonBFSiSCSIioSize = "65536"
+		$Recommended_iSCSIioSize = "131072"
 		# End of Tegile Host Configuration Variables
 
 		$MajorVer = 3
 		$MinorVer = 5
-		$PatchVer = 0
-		$BuildVer = 2
-		$VerMonth = "December"
-		$VerYear = 2016
+		$PatchVer = 2
+		$BuildVer = 1
+		$VerMonth = "May"
+		$VerYear = 2017
 		$LogReport += $EachLog
 		if ($Version){
 			$VerReport = @()
@@ -89,9 +82,6 @@
 		$EachLog | Add-Member -Type NoteProperty -Name StartDate -Value $RUNDATETIME
 		$EachLog | Add-Member -Type NoteProperty -Name LogFile -Value $LOGFILE
 
-		if (($autoapply -and (!$bfs -and !$nobfs)) -or ($autoapply -and $bfs -and $nobfs)){write-error "Autoapply requires either -bfs or -nobfs";Break}
-		if ($autoapply -and $bfs){$AUTO = "AUTOBFS"}
-		if ($autoapply -and $nobfs){$AUTO = "AUTONOBFS"}
 	}
 	Process{
 		$error.clear()
@@ -105,24 +95,13 @@
 			$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
 			$ACCEPTED = $host.ui.PromptForChoice($title, $message, $options, 1) 
 			if ($ACCEPTED -eq 1){$EachLog | Add-Member -Type NoteProperty -Name Disclaimer -Value "Not-Accepted";$LogReport += $EachLog;Write-Output $LogReport;Break} Else {$EachLog | Add-Member -Type NoteProperty -Name Disclaimer -Value "Accepted"}
-
-			$title = ""
-			$message = "`r`nDoes this server boot from SAN over iSCSI?`r`n`r`n"
-			$yes = New-Object System.Management.Automation.Host.ChoiceDescription "&Yes", "Sets the recommended iSCSI IO lengths to 128K"
-			$no = New-Object System.Management.Automation.Host.ChoiceDescription "&No", "Sets the recommended iSCSI IO lengths to 64K"
-			$options = [System.Management.Automation.Host.ChoiceDescription[]]($yes, $no)
-			Clear
-			$BFSResponse = $host.ui.PromptForChoice($title, $message, $options, 1) 
-			if ($BFSResponse -eq 0) {$iscsiiosize = $Recommended_BFSiSCSIioSize;$bfs = $true} Else {$iscsiiosize = $Recommended_NonBFSiSCSIioSize;$bfs = $false}
 			$EachLog | Add-Member -Type NoteProperty -Name AutoApply -Value $AUTO
 		} Else {
-			if ($AUTO -eq "AUTOBFS"){$iscsiiosize = $Recommended_BFSiSCSIioSize}
-			if ($AUTO -eq "AUTONOBFS"){$iscsiiosize = $Recommended_NonBFSiSCSIioSize}
 			write-host "Disclaimer is automatically accepted when using -autoapply"
 			$EachLog | Add-Member -Type NoteProperty -Name Disclaimer -Value "Auto-Accepted"
 			$EachLog | Add-Member -Type NoteProperty -Name AutoApply -Value $AUTO
         }
-		$EachLog | Add-Member -Type NoteProperty -Name ISCSI-BFS -Value $BFS
+		$iscsiiosize = $Recommended_iSCSIioSize
 		$EachLog | Add-Member -Type NoteProperty -Name ISCSI-Recommended-MaxTransferLength -Value $iscsiiosize
 		$EachLog | Add-Member -Type NoteProperty -Name ISCSI-Recommended-MaxBurstLength -Value $iscsiiosize
 
