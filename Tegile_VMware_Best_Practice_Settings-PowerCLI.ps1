@@ -2,7 +2,7 @@
 .SYNOPSIS
 Allows you to check for Tegile Best Practice settings for vSphere NFS & VMFS Datastores
 
-.DESCRIPTION
+.DESCRIPTION 
 This script will allow you to connect to vCenter, or a standalone host, and
 then will query and offer to apply Best Practice settings for NFS & VMFS Datastores
 *Note that if you don't run it with -ReportOnly, SATP rules for VMFS datastores will automatically install/update
