@@ -1,13 +1,15 @@
 <#
 .SYNOPSIS
-Allows you to leverage Tegile IntelliFlash API and VMware PowerCLI to clone VMFS datastore, and automatically add 2 .vmdk's from it to a VM
+Allows you to leverage the IntelliFlash API and VMware PowerCLI to clone a VMFS datastore, and automatically add 2 .vmdk's from it to a VM
+
+Assumes that both [Database and Log] vmdk's are in a single VMFS datastore backed by an IntelliFlash LUN with an existing snapshot
 
 .DESCRIPTION
 This script will allow you to connect to vCenter & a Tegile IntelliFlash array, and
 Then clone an existing VMFS datastore and add .vmdk's out of it to a VM
 
 Requires PowerShell version 5 or better, and PowerCLI version 6.3 r1 or better
-Tested with vSphere 5.5 through 6.5
+Tested with vSphere 5.5 through 6.7
 
 The script has several required parameters, and a few optional, all will autocomplete after '-'
 	Required:
@@ -31,7 +33,7 @@ The script has several required parameters, and a few optional, all will autocom
 	-AcceptDisclaimer | Accept the disclaimer without being prompted to do so within the script - you accept all responsibility anyway!
 
 .EXAMPLE
-.\Tegile_VMFS_DB-LOG_Clone_and_Mount.ps1 -VCServer 10.65.240.25 -VCUser administrator@vsphere.local -Array 10.65.240.184 -ArrayUser admin -ArrayPassword tegile -SourceVMname Win2012R2-ThinDemo -TargetVMname Win2012R2-ThinDemo-clone -Datastore T3100-VMW6-ThinDemoLUN01 -DBvmdk Win2012R2-ThinDemo.vmdk -LOGvmdk Win2012R2-ThinDemo_1.vmdk -Datacenter vSphere-6
+.\Tegile_VMFS_DB-LOG_Clone_and_Mount.ps1 -VCServer 10.42.42.42 -VCUser administrator@vsphere.local -Array 10.42.42.142 -ArrayUser admin -ArrayPassword tegile -SourceVMname SQL-Prod -TargetVMname SQL-Test -Datastore SQL-Prod-LUN01 -DBvmdk SQL-Prod.vmdk -LOGvmdk SQL-Prod_1.vmdk -Datacenter vSphere-6
 
 
 .LINK
@@ -98,10 +100,10 @@ http://www.tegile.com/
 # Script Version:
 $MajorVer = 3
 $MinorVer = 7
-$PatchVer = 0
-$BuildVer = 4
-$VerMonth = 1
-$VerDay = 17
+$PatchVer = 1
+$BuildVer = 1
+$VerMonth = 9
+$VerDay = 10
 $VerYear = 2018
 $Author = "Ben Kendall & Ken Nothnagel, Tegile / WDC Professional Services"
 
@@ -189,7 +191,7 @@ $PCLIMAJVER = ((Get-Module -Name VMware.VimAutomation.Core).version).Major
 $PCLIMINVER = ((Get-Module -Name VMware.VimAutomation.Core).version).Minor
 if ($PCLIMAJVER -lt "6") {
 	$PCLIVEROLD = $true
-} elseif (($PCLIMAJVER -ge "6") -and ($PCLIMINVER -lt "3")) {
+} elseif (($PCLIMAJVER -eq "6") -and ($PCLIMINVER -lt "3")) {
 	$PCLIVEROLD = $true
 }
 if ($PCLIVEROLD) {
@@ -933,7 +935,7 @@ if ($SessionID) {
     Disconnect-VIServer -Server $VCServer
 }
 
-If (!$Password -or !$VCUser) {
+If (!$VCPassword -or !$VCUser) {
 	$vccredential = $host.ui.promptforcredential("Need vCenter Credentials", "User Name and Password for vCenter '$VCServer':", "$VCUser", "")
 	Connect-VIServer -Server $VCServer -Credential $vccredential -WarningAction SilentlyContinue
 } else {
@@ -947,7 +949,8 @@ if ("$?" -eq "False") {
 
 # Get list of hosts:
 if ($Cluster) {
-	$VMHosts = Get-VMHost -Server $VCServer -Location $Cluster -ErrorAction SilentlyContinue
+	$VMHosts = (Get-Datacenter $Datacenter |Get-Cluster $Cluster|Get-VMHost)
+    #$VMHosts = Get-VMHost -Server $VCServer -Location $Cluster -ErrorAction SilentlyContinue
 	if (!$VMHosts) {
 		Write-Host "`nLooks like an invalid cluster was specified or no hosts present, exiting...`n" -foregroundcolor red
 		Exit 1
@@ -1068,29 +1071,29 @@ if (!$snaps) {
 		$esxcli.storage.vmfs.snapshot.resignature.Invoke(@{volumeuuid = $snap.VMFSUUID}) |Out-Null
 		if ($? -eq "True") {
 			Write-Host "Resignature appears to have been successful" -foregroundcolor green
-            Write-Host "`nRescanning storage on all hosts..."
-            foreach ($VMHost in $VMHosts) {
-	            Write-Host "Rescanning $VMHost..."
-                Get-VMHostStorage -VMHost $VMHost -RescanAllHba -RescanVmfs |out-null
-            }
-			Write-Host "`nRenaming datastore with LUID '$NEWDATASTORECLONELUID' to '$DATASTORECLONENAME'..."
-            Sleep 5
-			$DSList = ((Get-View (Get-View (Get-VMHost -Name $ESXISERVER).ID).ConfigManager.StorageSystem).FileSystemVolumeInfo.MountInfo.Volume | Select Name,Extent)
-            foreach ($DS in $DSList){
-                If ($DS.Extent.DiskName -like "*$NEWDATASTORECLONELUID*"){
-                    $DSRenameStatus = (Get-Datastore -Name $DS.Name| Set-Datastore -Name $DATASTORECLONENAME)
-                }
-            }
-            if ($? -eq "True") {
-				Write-Host "Rename appears to have completed as well!" -foregroundcolor green
-			} else {
-				Write-Host "Rename appears to have failed, exiting!" -foregroundcolor red
-				Exit 1
-			}
 		} else {
 			Write-Host "Resignature appears to have failed, exiting!" -foregroundcolor red
 			Exit 1
 		}
+	}
+	Write-Host "`nRescanning storage on all hosts..."
+	foreach ($VMHost in $VMHosts) {
+		Write-Host "Rescanning $VMHost..."
+		Get-VMHostStorage -VMHost $VMHost -RescanAllHba -RescanVmfs |out-null
+	}
+	Write-Host "`nRenaming datastore with LUID '$NEWDATASTORECLONELUID' to '$DATASTORECLONENAME'..."
+	Sleep 5
+	$DSList = ((Get-View (Get-View (Get-VMHost -Name $ESXISERVER).ID).ConfigManager.StorageSystem).FileSystemVolumeInfo.MountInfo.Volume | Select Name,Extent)
+	foreach ($DS in $DSList){
+		If ($DS.Extent.DiskName -like "*$NEWDATASTORECLONELUID*"){
+			$DSRenameStatus = (Get-Datastore -Name $DS.Name| Set-Datastore -Name $DATASTORECLONENAME)
+		}
+	}
+	if ($? -eq "True") {
+		Write-Host "Rename appears to have completed as well!" -foregroundcolor green
+	} else {
+		Write-Host "Rename appears to have failed, exiting!" -foregroundcolor red
+		Exit 1
 	}
 }
 
