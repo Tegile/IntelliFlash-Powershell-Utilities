@@ -8,7 +8,7 @@ then will query and offer to apply Best Practice settings for NFS & VMFS Datasto
 *Note that if you don't run it with -ReportOnly, SATP rules for VMFS datastores will automatically install/update
 
 Requires PowerShell version 5 or better, and PowerCLI version 6.3 r1 or better
-Tested with vSphere 5.5 through 6.5
+Tested with vSphere 5.5 through 6.7
 
 The script has several optional parameters, which will autocomplete after '-':
 	-Version (alias: -ver, -v) | Returns script version
@@ -153,10 +153,10 @@ http://www.tegile.com/
 # Script Version:
 $MajorVer = 3
 $MinorVer = 7
-$PatchVer = 0
-$BuildVer = 18
-$VerMonth = 04
-$VerDay = 22
+$PatchVer = 1
+$BuildVer = 0
+$VerMonth = 07
+$VerDay = 30
 $VerYear = 2018
 $Author = "Ben Kendall, Ken Nothnagel, & Tom Crowe, Tegile / WDC Professional Services"
 
@@ -170,13 +170,13 @@ $VerMonthName = (Get-Culture).DateTimeFormat.GetAbbreviatedMonthName($VerMonth)
 
 
 # Specify the currrent Tegile NAS VAAI Host Extension (aka "Plugin") version:
-$tegilepluginversion = "1.0-15.67"
+$tegilepluginversion = "1.0-15.70"
 
 
 # Specify the depot path for the Tegile NAS VAAI Host Extension
 # Note that you can change to format "file:/path/to/tgl-vaai-nas-plugin.zip" if it's on storage mounted on the host (required if host doesn't have Internet access)
-# Example of local file path:  $depotpath = "file:/vmfs/volumes/Datastore01/patches/tgl-vaai-nas-plugin_1.0-15.67---3.7.0.2.zip"
-$depotpath = "http://s1.tegile.com/ps/vmware/tgl-vaai-nas-plugin_1.0-15.67---3.7.0.2"
+# Example of local file path:  $depotpath = "file:/vmfs/volumes/Datastore01/patches/tgl-vaai-nas-plugin_1.0-15.70---3.7.1.0.zip"
+$depotpath = "http://s1.tegile.com/ps/vmware/tgl-vaai-nas-plugin_1.0-15.70---3.7.1.0"
 
 
 # NFS Settings, Queue Depth is adjustable per your needs, leave the others unless you know what you're doing:
@@ -754,6 +754,9 @@ foreach ($VMHost in $VMHosts) {
 			} elseif ($VMHost.Version -eq "6.5.0") {
 				$nettcpipheapmax = $nettcpipheapmax6x
 				Write-Host "Found ESXi version '6.5.0', preferred Net.TcpipHeapMax is $nettcpipheapmax"
+			} elseif ($VMHost.Version -eq "6.7.0") {
+				$nettcpipheapmax = $nettcpipheapmax6x
+				Write-Host "Found ESXi version '6.7.0', preferred Net.TcpipHeapMax is $nettcpipheapmax"
 			} else {
 				Write-Host "`nUnable to determine appropriate Net.TcpipHeapMax setting for ESXi version:" $VMHost.version -foregroundcolor red
 			}
