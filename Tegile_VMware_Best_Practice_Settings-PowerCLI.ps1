@@ -2,7 +2,7 @@
 .SYNOPSIS
 Allows you to check for Tegile Best Practice settings for vSphere NFS & VMFS Datastores
 
-.DESCRIPTION 
+.DESCRIPTION
 This script will allow you to connect to vCenter, or a standalone host, and
 then will query and offer to apply Best Practice settings for NFS & VMFS Datastores
 *Note that if you don't run it with -ReportOnly, SATP rules for VMFS datastores will automatically install/update
@@ -11,29 +11,33 @@ Requires PowerShell version 5 or better, and PowerCLI version 6.3 r1 or better
 Tested with vSphere 5.5 through 6.7
 
 The script has several optional parameters, which will autocomplete after '-':
-	-Version (alias: -ver, -v) | Returns script version
-	-ReportOnly (alias: -ro) | Apply no settings just report and generate CSV file
+
+	-ReportOnly (alias: -ro) | Recommended on first run: Apply no settings just report and generate CSV file
+	-VCServer (alias: -vCenter) | Required: Specify the IP or FQDN of the vCenter Server or ESXi Host
+	-Cluster | Specify a specific cluster (or even a folder) rather than the default which is all hosts and clusters under vCenter
+	-SkipNFS | Skip the query/application of all/any NFS best practice settings (implies -SkipMaxVol)
+	-SkipMaxVol | Skip the query/application of NFS.MaxVolumes and related settings
+	-SkipVAAI | Skip query/installation of NFS VAAI extension
+	-SkipBlock | Skip checking/applying Tegile's recommended settings for LUN's / VMFS datastores, which includes SATP rules
+		*Note, this also includes disabling VAAI ATS for VMFS Heartbeat. We recommend disabling ATS for VMFS Heartbeat, KB 2113956.
+	-SkipATS | Skip disabling VAAI ATS for VMFS Heartbeat. ESXi 5.5u2 or greater is required to disable ATS for VMFS HB, so use this for older releases
+	-SkipUpdate | Skip the script version check against the one on s1.tegile.com and subsequent prompt for update if different
 	-DatastorePathCheck | ESX 6.0 or later required. This will check and report all Tegile FC and iSCSI paths supporting VMFS Datastores.
 	-RDMPathCheck | ESX 6.0 or later required. This will check and report all paths for any Tegile LUN's supporting RDM's.
 	-HostPathCheck | ESX 6.0 or later required. This will check and report the total number of Tegile FC and iSCSI paths for all hosts.
 	-CheckIOPS | ESX 6.0 or later required. This will check the current IOPS=XX setting for each Tegile LUN attached.
 	-SetIOPS | ESX 6.0 or later required. This will adjust the current IOPS=XX setting for each Tegile LUN attached.
-	-SkipMaxVol | Skip the query/application of NFS.MaxVolumes and related settings
-	-SkipVAAI | Skip query/installation of NFS VAAI extension
-	-SkipNFS | Skip the query/application of all/any NFS best practice settings (implies -SkipMaxVol)
-	-SkipBlock | Skip checking/applying Tegile's recommended settings for LUN's / VMFS datastores, which includes SATP rules
-		*Note, this also includes disabling VAAI ATS for VMFS Heartbeat. We recommend disabling ATS for VMFS Heartbeat, KB 2113956.
-	-SkipATS | Skip disabling VAAI ATS for VMFS Heartbeat. ESXi 5.5u2 or greater is required to disable ATS for VMFS HB, so use this for older releases
-	-SkipUpdate | Skip the script version check against the one on s1.tegile.com and subsequent prompt for update if different
+	-AddSwInitiator | Add the VMware software iSCSI initiator to the host(s)
+	-AddIQNGroup | Pull the IQN from the software initiator on ESXi host(s) and add it to a new or existing initiator group on the IntelliFlash array
+	-AddDynamicIps | Add IP's to the Dynamic section of the software iSCSI initiator (to initiate SendTargets command)
 	-LegacySATP | Check/Apply legacy ZEBI-FC and ZEBI-ISCSI SATP rules for LUN's created prior to IntelliFlash 3.x
 	-AcceptDisclaimer | Accept the disclaimer without being prompted to do so within the script - you accept all responsibility anyway!
 	-AutoApply | (alias: -auto) Automatically apply all changes deemed necessary without prompt or check for maintenance mode
-	-VCServer (alias: -vCenter) | Specify the IP or FQDN of the vCenter Server or ESXi Host
-	-Cluster | Specify a specific cluster (or even a folder) rather than the default which is all hosts and clusters under vCenter
-	-User (alias: -u) | Specify the user account for vCenter or Host connectivity
-	-Password (alias: -p) | Specify the password for the designated user account
+	-User (alias: -u) | Optionally specify the user account for vCenter or Host connectivity
+	-Password (alias: -p) | Optionally specify the password for the designated user account
+	-Version (alias: -ver, -v) | Returns script version
 
-You must specify/verify the vaai plugin version and depot path statically within the script,
+You must specify/verify the VAAI extension version and Depot Path statically within the script,
 just edit with a text editor and look for the variables
 	
 The vCenter server can optionally be specified statically within the script as well
@@ -43,7 +47,7 @@ The vCenter server can optionally be specified statically within the script as w
 Displays the current script version
 
 .EXAMPLE
-.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -ReportOnly -vCenter vc1.tegile.local
+.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -ReportOnly -VCServer vc1.tegile.local
 Connects to the vCenter server vc1.tegile.local,
 and runs in Report Only mode against all hosts (no changes to hosts)
 
@@ -53,7 +57,7 @@ Connects to the vCenter Server vc1.tegile.local, runs against only hosts in clus
 and runs in regular mode to apply all changes except NFS.MaxVolumes and related settings
 
 .EXAMPLE
-.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -SkipNFS -vCenter vc1.tegile.local
+.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -SkipNFS -VCServer vc1.tegile.local
 Connects to the vCenter Server vc1.tegile.local,
 and runs in regular mode to apply SATP rules and related settings, but no NFS settings
 
@@ -63,7 +67,7 @@ Connects to the vCenter Server vc1.tegile.local,
 and runs in regular mode to apply all NFS related settings but no SATP rules or disabling of ATS for VMFS Heartbeat
 
 .EXAMPLE
-.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -SetIOPS -SkipNFS -vCenter vc1.tegile.local
+.\Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1 -SetIOPS -SkipNFS -VCServer vc1.tegile.local
 Connects to the vCenter Server vc1.tegile.local,
 checks all Tegile LUN IOPS=xx setting and updates to what's specified in the script if necessary,
 and then also checks/applies all SATP rules, but does not apply any NFS settings
@@ -91,6 +95,15 @@ http://www.tegile.com/
 		$ReportOnly,
 		[Parameter()]
 		[Switch]
+        $addSwInitiator,
+        [Parameter()]
+        [Switch]
+        $addDynamicIps,
+        [Parameter()]
+        [Switch]
+        $addIQNGroup,
+        [Parameter()]
+        [Switch]
 		$SkipMaxVol,
 		[Parameter()]
 		[Switch]
@@ -154,15 +167,15 @@ http://www.tegile.com/
 $MajorVer = 3
 $MinorVer = 7
 $PatchVer = 1
-$BuildVer = 0
-$VerMonth = 07
-$VerDay = 30
-$VerYear = 2018
-$Author = "Ben Kendall, Ken Nothnagel, & Tom Crowe, Tegile / WDC Professional Services"
+$BuildVer = 4
+$VerMonth = 02
+$VerDay = 09
+$VerYear = 2019
+$Author = "Ben Kendall, Ken Nothnagel, Tom Crowe, & Andrew Seifert, WD IntelliFlash Professional Services"
 
 $VerMonthName = (Get-Culture).DateTimeFormat.GetAbbreviatedMonthName($VerMonth)
 
-# Make sure you're on at least PowerShell v5 and have latest PowerCLI. Tested with PowerCLI 6.5.3
+# Make sure you're on at least PowerShell v5 and have latest PowerCLI. Tested with minimum PowerCLI version 6.3 r1.
 # To get latest PowerCLI, first Uninstall any legacy PowerCLI from Add/Remove Programs, and install via PowerShell:
 # Find-Module -Name VMware.PowerCLI
 # Install-Module -Name VMware.PowerCLI -Scope AllUsers    ## Can also set -Scope to CurrentUser if not running as Administrator
@@ -189,12 +202,6 @@ $nfsheartbeatfreq = 20
 $iopssetting = 1
 
 
-# Specify the vCenter Server IP or FQDN if not passing via CLI:
-if (!$VCServer) {
-$VCServer = "10.10.10.42"
-}
-
-
 # NFS Max Volumes adjustments, note that TcpipHeapMax varies with ESXi version, see list of max values listed under the variables:
 # https://kb.vmware.com/kb/2239
 # Don't update the below unless you know what you're doing, they're referenced later in the script after determining host version
@@ -210,8 +217,7 @@ $tegilevmfshb = 0
 
 ### Begin our work
 
-## Only check the version of the script
-
+## Only check the version of the script:
 if ($Version) {
 	$VerReport = @()
 	$EachVer = New-Object -TypeName PSObject
@@ -254,24 +260,6 @@ if ("$PSHELLVER" -lt "5") {
 	Exit 1
 }
 
-# Verify PowerCLI is loaded, if not try to import the module and exit if that fails:
-if (!(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
-	Try {
-	Import-Module -Name VMware.VimAutomation.Core -ErrorAction Stop
-	}
-	Catch {
-		Clear
-		Write-Host "`nIt appears that you do not have PowerCLI installed, which is required!" -foregroundcolor red
-		Write-Host "`nYou can install via:" -foregroundcolor yellow
-		Write-Host "Find-Module -Name VMware.PowerCLI" -foregroundcolor yellow
-		Write-Host "Install-Module -Name VMware.PowerCLI -Scope AllUsers" -foregroundcolor yellow
-		Write-Host "(Can also set -Scope to CurrentUser if not running as Administrator)" -foregroundcolor yellow
-		Write-Host "`nExiting the script..." -foregroundcolor red
-		Stop-Transcript
-		Exit 1
-	}
-}
-
 if (!$AcceptDisclaimer) {
 	# Disclaimer
 	$DISCLAIMER = "`nDISCLAIMER`r`n`r`nThis script is provided AS IS without warranty of any kind. Tegile and Western Digital further disclaims all implied warranties including, without limitation, any implied warranties of merchantability or of fitness for a particular purpose. The entire risk arising out of the use or performance of this script and documentation remains with you. In no event shall Tegile, Western Digital, or anyone else involved in the creation, production, or delivery of this script be liable for any damages whatsoever (including, without limitation, damages for loss of business profits, business interruption, loss of business information, or other pecuniary loss) arising out of the use of or inability to use this script or documentation, even if Tegile or Western Digital has been advised of the possibility of such damages.`r`n`r`nThis Script should only be run with the direct supervision of a Tegile/Western Digital Engineer."
@@ -293,6 +281,7 @@ if (!$AcceptDisclaimer) {
 } else {
 	Write-Host "`nYou specified -AcceptDisclaimer - you're ignoring the Disclaimer and accepting all responsibility anyway!" -foregroundcolor yellow
 }
+
 if (!$SkipUpdate) {
 	# Check Script Version against the one on s1.tegile.com, offer to update if they're different:
 	$url = "http://s1.tegile.com/ps/vmware/Tegile_VMware_Best_Practice_Settings-PowerCLI.ps1"
@@ -354,7 +343,25 @@ if (!$SkipUpdate) {
 	Write-Host "`nSkipping the script version and update check, as requested"
 }
 
-# Check to see if PowerCLI is new enough:
+# Verify PowerCLI is loaded, if not try to import the module and exit if that fails:
+if (!(Get-Module -Name VMware.VimAutomation.Core -ErrorAction SilentlyContinue)) {
+	Try {
+	Import-Module -Name VMware.VimAutomation.Core -ErrorAction Stop
+	}
+	Catch {
+		Clear
+		Write-Host "`nIt appears that you do not have PowerCLI installed, which is required!" -foregroundcolor red
+		Write-Host "`nYou can install via:" -foregroundcolor yellow
+		Write-Host "Find-Module -Name VMware.PowerCLI" -foregroundcolor yellow
+		Write-Host "Install-Module -Name VMware.PowerCLI -Scope AllUsers" -foregroundcolor yellow
+		Write-Host "(Can also set -Scope to CurrentUser if not running as Administrator)" -foregroundcolor yellow
+		Write-Host "`nExiting the script..." -foregroundcolor red
+		Stop-Transcript
+		Exit 1
+	}
+}
+
+# Verify minimum PowerCLI version:
 $PCLIMAJVER = ((Get-Module -Name VMware.VimAutomation.Core).version).Major
 $PCLIMINVER = ((Get-Module -Name VMware.VimAutomation.Core).version).Minor
 if ($PCLIMAJVER -lt "6") {
@@ -375,35 +382,296 @@ if ($PCLIVEROLD) {
     Exit 1
 }
 
-Set-PowerCLIConfiguration -DefaultVIServerMode Single -InvalidCertificateAction Ignore -Scope Session -Confirm:$false | Out-Null
+# Set some appropriate session options for PowerCLI config:
+Set-PowerCLIConfiguration -DefaultVIServerMode Single -InvalidCertificateAction Ignore -ParticipateInCEIP $false -Scope Session -Confirm:$false | Out-Null
 
+# Report on provided parameters:
 if ($ReportOnly) {
 	Write-Host "`nRunning in Report Only mode, will not be applying any changes, as requested"
 } elseif ($AutoApply) {
 	Write-Host "`nAutomatically applying changes without prompt or maintenance mode check, as requested"
 }
 if ($SkipMaxVol) {
-	Write-Host "`nNot applying NFS.MaxVolumes, Net.TcpipHeapSize, or Net.TcpipHeapMax settings, as requested"
+	Write-Host "`nSkipping check/application of NFS.MaxVolumes, Net.TcpipHeapSize, and Net.TcpipHeapMax settings, as requested"
 }
 if ($SkipVAAI) {
 	Write-Host "`nSkipping check/installation of NFS VAAI extension, as requested"
 }
 if ($SkipNFS) {
-	Write-Host "`nNot checking or applying any settings related to NFS, as requested"
+	Write-Host "`nSkipping check/application of all settings related to NFS, as requested"
+} elseif (!$SkipVAAI) {
+	Write-Host "`nUsing the following Depot Path for VAAI extension, host(s) will need access if installation/update is required:"
+	Write-Host "`n     $depotpath" -foregroundcolor yellow
+	Write-Host "`nIf necessary edit the '`$depotpath' variable in the script to a local depot as noted in the comments section."
 }
 if ($SkipBlock) {
-	Write-Host "`nNot checking or applying any SATP Rules or disabling ATS for VMFS Heartbeat, as requested"
+	Write-Host "`nSkipping check/application of SATP Rules and disable of ATS for VMFS Heartbeat, as requested"
 } else {
 	if ($LegacySATP) {
 		Write-Host "`nChecking/Applying legacy SATP rules, as requested"
 	}
 }
 if ($SkipATS) {
-	Write-Host "`nNot checking/disabling VAAI ATS for VMFS Heartbeat, as requested"
+	Write-Host "`nSkipping check/disable of ATS for VMFS Heartbeat, as requested"
 }
 if ($Cluster) {
 	Write-Host "`nLimiting scope to specified cluster: $Cluster"
 }
+if ($AddSwInitiator) {
+    Write-Host "`nLet's go looking for some iSCSI Software Initiators. . . "
+}
+if ($AddIQNGroup) {
+    Write-Host "`nFishing for IQNs are we . . . Parsing through the void of the infinite VMware for IQNs to add to our IntelliFlash array"
+}
+if ($AddDynamicIps) {
+    Write-Host "`nAdding Dynamic IPs to VMware"
+}
+
+# vCenter or Host IP or FQDN is required for anything other than script version check, so catch if not passed via CLI and prompt for it:
+if (!$VCServer) {
+	Write-Host "`nvCenter or Host IP or FQDN is required, normally specified after -VCServer parameter." -foregroundcolor yellow
+	$VCServer = Read-Host "Please enter vCenter or Host IP or FQDN: "
+}
+if ($VCServer) {
+	Write-Host "`nWe'll be connecting to the specified vCenter or ESXi host: $VCServer"
+} else {
+	Write-Host "`nYou did not specify a vCenter or ESXi host for us to connect to, exiting...`n" -foregroundcolor red
+	Stop-Transcript
+	Exit 1
+}
+
+
+#############ChangeLog - Andrew Seifert iSCSI Additions################
+# Added software iSCSI check and install, dynamic IP adds,
+# and IQN addition for IntelliFlash array including initiator group creation
+#
+#########End ChangeLog###############
+#lets add some functions########################
+
+function AddIscsiInitiator {
+
+    #verify the software adapter
+    Write-Host "`nLooking for the iSCSI Software Adapter" -ForegroundColor Yellow
+    $hba = Get-VMHost $VMHost | Get-VMHostHba | Select-Object Model | Where { $_.Model -eq 'iSCSI Software Adapter' }
+    Write-Host $hba.Model
+
+    If ( $hba.Model -eq 'iSCSI Software Adapter' ) {
+        Write-Host "`nThe iSCSI Software Adapter is installed." -ForegroundColor Green
+    } else {
+        Write-Host "`nIt appears the software iSCSI Software Adapter is not installed.  IntelliFlash arrays require this for iSCSI connection."
+
+		$shell = Read-Host "`nWould you like to install? (default is no) (y/n)"
+
+        If ( $shell -eq "y" ) {
+    
+        #install the software initiator
+        Get-VMHost $VMHost | get-vmhoststorage | Set-VMHostStorage -SoftwareIScsiEnabled $True
+
+        #sleep to let the initiator load
+        Write-Host "Installing the iSCSI Software Adapter" -ForegroundColor Green
+		
+		$verify = $false
+		while(($verify -eq $false) -and ($loop -lt 6)){
+			Start-Sleep -Seconds 5
+			$loop++
+			$verify = Get-VMHostStorage | Select-Object SoftwareIScsiEnabled
+			Write-Host "Verifying the iSCSI Software Adapter is installed" -ForegroundColor Green
+			if ($verify) { Write-Host "Verified!" }
+			$HOSTREPORT += "Software iSCSI Adapter was installed"
+		}
+        
+		If ($loop -eq 5){
+			Write-Host "Unable to create the iSCSI Software Initiator on $VMHost" -ForegroundColor Red
+		}
+    
+        } Else {
+			Write-Host "Exiting script, chose not to install the initiator"
+		}
+    }
+}
+
+function ArrayInfo {
+
+    $global:array = Read-Host "`nPlease enter your array ip: "
+    $global:arrUser = Read-Host "Please enter the array user: "
+    $global:arrPasswd = Read-Host "Please enter your array password: "
+	###----can be set if you want below------#
+    #$global:array = ""
+    #$global:arrUser = ""
+    #$global:arrPasswd = ""
+    #$global:iqnGrpName = Read-Host "Please enter your Initiator Group Name for the array: "
+}
+
+function AddIQNs() {
+
+    $hostIqn = ""
+    $initGrpArr = @()
+    $arrayIqnArr = @()
+
+    #get IQN of host
+    Write-Host "`nGathering our IQN`n" -ForegroundColor Green
+    $storInfo = Get-VMHost $VMHost | Get-VMHostStorage
+    $storHba = get-view (Get-VMHostStorage -VMHost (Get-VMHost -Name $VMHost )).ID
+	
+    $storHba.StorageDeviceInfo.HostBusAdapter | where {$_.GetType().Name -eq "HostInternetScsiHba"} | %{
+    Write-Host "IQN for $VMHost :" $_.IscsiName -ForegroundColor Green
+    $hostIqn = $_.IscsiName
+    }
+
+	if (!($hostIqn)) {
+		Write-Host "There is no iSCSI Software Initiator on this host, please add an initiator first using the flag -addswinitiator"
+		Write-Host "Exiting"
+		break
+	}
+	
+    #next we grab our initiator groups from the Tegile
+    Write-Host "`nChecking initiators on the array for duplicates" -ForegroundColor Yellow
+
+    ######creating basic authentication method######
+    # create a byte string array from the user and password for the array
+    $encodeUsr = [System.Text.Encoding]::UTF8.GetBytes($arrUser + ":" + $arrPasswd)
+ 
+    # This converts the above variable to base64.  this is how ssl passes security
+    $auth_token = [System.Convert]::ToBase64String($encodeUsr) 
+
+    $header = @{"Authorization"="Basic $auth_token"; "Content-Type"="application/json"}
+
+    $url = "https://$array/zebi/api/v2/listISCSIInitiatorGroups"
+    $urlAddToGrp = "https://$array/zebi/api/v2/addInitiatorToInitiatorGroup"
+    $urlAddiSCSIInit = "https://$array/zebi/api/v2/createIscsiInitiator"
+    $urlListInit = "https://$array/zebi/api/v2/listISCSIInitiators"
+
+    # This is the request method
+    $methodQuery = "GET"
+    $methodAdd = "POST"
+
+    #the below can be edited if you want to use defaults
+
+    #allow auth into the Tegile
+    #$user = "admin"
+    #$passwd = "zzzzzzzz"
+
+    #-------------------------------------------------#
+
+    # Allow the use of self-signed SSL certificates and use TLS 1.2:
+	[System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true }
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+    #gather our currently installed initiators
+    $opsListInit = "[`".*`"]"
+    $restReq = Invoke-RestMethod -Method $methodAdd -Headers $header -Uri $urlListInit -Body $opsListInit
+    #Invoke-RestMethod -Method $methodAdd -Headers $header -Uri $urlListInit -Body $opsListInit
+    $arrayIqnArr+= $restReq.initiatorName
+    $matchedIqn = ""
+    
+    foreach ( $i in $arrayIqnArr ) { 
+        If ( $i -match $hostIqn ) {
+           $matchedIqn = $i
+        } 
+    }
+
+    if ( $matchedIqn -match $hostIqn ) {
+        Write-Host "`nIt appears that this IQN is already on the array" -ForegroundColor Green
+        Write-Host "`nIQN found on array: $matchedIqn" -ForegroundColor Yellow
+    } else {
+
+        Write-Host "This host's IQN is not currently on the array`n" -ForegroundColor Green
+        Write-Host "Here are the current initiator groups on the array`n" -ForegroundColor Green
+    
+        #gather our possible initiator groups
+        $restReq = Invoke-RestMethod -Method $methodQuery -Headers $header -Uri $url
+        $initGrpArr += $restReq
+        foreach ( $g in $initGrpArr ) {
+            Write-Host $g
+        }
+        #print our groups - ask which one to use or create new
+        Write-Host "`nPlease type in group to use or create a new group by entering the name you wish to use. `nNote that special characters, spaces, and underscores are not allowed" -ForegroundColor Green
+        
+		do {
+			$newGrp = Read-Host "Enter Initiator Group Name"
+		} while (
+			$newGrp -notmatch '[^a-zA-Z0-9"-"]'
+		)
+		
+        #for ease of mind - validation check for init group
+        if ($initGrpArr -match $newGrp) {
+            Write-Host "`nUsing $newGrp for IQN additions" -ForegroundColor Green
+        } else {
+            Write-Host "The group does not currently exist.  Creating new group" -ForegroundColor Green
+        }
+
+        #validate and add our IQNs to array
+    
+        #options for adding initiators
+        $optsAddInit = "[ { `"initiatorName`":`"$hostIqn`",`"chapUserName`":`"`",`"chapSecret`":`"`" } ]"
+        $restReqInit = Invoke-RestMethod -Method $methodAdd -Headers $header -Uri $urlAddiSCSIInit -Body $optsAddInit -ErrorAction SilentlyContinue
+    
+        #add our iqns to the initgroup chosen 
+    
+        #add our options for this request
+        $opts = "[`"$hostIqn`", `"$newGrp`"]"
+        $restReqAdd = Invoke-RestMethod -Method $methodAdd -Headers $header -Uri $urlAddToGrp -Body $opts
+    
+        Write-Host "`nAdded IQNs to $newGrp" -ForegroundColor Green
+	}
+}
+
+function AddDynamicIPs {
+
+	$ipArr = @()
+    #verify the software adapter
+    $hba = Get-VMHostHba -VMHost $VMHost | Select-Object VMHost,IScsiName,Model | Where {$_.Model -eq "iSCSI Software Adapter"}
+    Write-Host "`nAdd IP Targets to Dynamic Discovery on VMware Software iSCSI Initiator for host:" $VMHost.Name -ForegroundColor Green
+    
+    #get ips for target to add to vmware
+	$ipArr = @()
+	$targetIpArr = @()
+
+	do {
+    	[string]$targetIps = Read-Host "`nPlease enter the IP you wish to add to the VMware iSCSI Software Initiator"
+    	$targetIpArr = $targetIps.Split(",").Trim()
+
+    	foreach($check in $targetIpArr) {
+        	try {
+                $test = [ipaddress]$check
+                if ($test) {
+                    $ipArr += $check
+                }
+            }
+            catch {
+                Write-Host "$check is not a valid IP address and will be ignored." -ForegroundColor DarkGreen
+            }
+		}
+		Write-Host "Current IPs in your list..." -ForegroundColor Yellow
+    	foreach ($i in $IpArr) {
+        	Write-Host $i -ForegroundColor Yellow
+    	}
+
+    	[string]$continue = Read-Host "`nWould you like to add additional IPs addresses? (y/n; n is default)"
+
+	} until (($continue -cmatch "n") -or ($continue -eq ""))
+
+	#add our ips to the adapter
+	$yesNo = Read-Host "`nReady to add IPs to your adapter? (y/n; n is default)"
+	if ($yesNo -eq "y") {
+		foreach ($target in $ipArr) {
+			# Check to see if the SendTarget exist, if not add it
+			if (Get-IScsiHbaTarget -IScsiHba ($hba.model | where {$_.model -eq 'iSCSI Software Adapter'}) -Type Send | Where {($_.Address -cmatch $target) -and ($_.IScsiHbaName -eq $hba.IScsiName)}) {
+				Write-Host "`nThe target IP $target already exists on the host"
+			} else {
+				Write-Host "`nThe target IP $target doesn't exist on the host"
+				Write-Host "Adding Dynamic Discovery IP $target on the host..."
+				$newTarget = Get-VMHost $VMHost | Get-VMHostHba -type iscsi
+				New-IScsiHbaTarget -IScsiHba ($newTarget | where {$_.model -eq 'iSCSI Software Adapter' }) -Address $target
+				Write-Host "`nPlease remember to verify iSCSI VMkernel Port binding, only if using a single subnet!"
+			}
+		}
+	} else {
+		Write-Host	"Skipping IP additions...."
+	}
+}
+######################## End Andrew Seifert iSCSI additions #####################
+
 
 # Disconnect any existing vCenter sessions (thus forcing re-login every time script is run):
 # if ((Test-Path Variable:global:DefaultVIServer) -and ($global:DefaultVIServers -ne $null)) {
@@ -431,18 +699,26 @@ if ("$?" -eq "False") {
 
 # Get list of hosts:
 if ($Cluster) {
-	$VMHosts = Get-VMHost -Server $VCServer -Location $Cluster -ErrorAction SilentlyContinue
+	$VMHosts = Get-VMHost -Server $VCServer -Location $Cluster -ErrorAction SilentlyContinue | Sort
 	if (!$VMHosts) {
 		Write-Host "`nLooks like an invalid cluster was specified or no hosts present, exiting...`n" -foregroundcolor red
 		Exit 1
 	}
 } else {
-	$VMHosts = Get-VMHost -Server $VCServer -ErrorAction SilentlyContinue
+	$VMHosts = Get-VMHost -Server $VCServer -ErrorAction SilentlyContinue | Sort
 	if (!$VMHosts) {
 		Write-Host "`nLooks like no hosts present in inventory, exiting...`n" -foregroundcolor red
 		Exit 1
 	}
 }
+
+#list out the hosts and let the user know what is getting updated
+Write-Host "`nHere are the hosts we'll be touching:`n"
+foreach ($VMHost in $VMHosts) {$VMHost.Name}
+
+### Andrew Seifert iSCSI additions ###
+if ($addIQNGroup) { arrayInfo }
+### End Andrew Seifert iSCSI additions ###
 
 # Loop through hosts one at at time and apply settings and install Tegile NAS VAAI host extension:
 foreach ($VMHost in $VMHosts) {
@@ -462,6 +738,25 @@ foreach ($VMHost in $VMHosts) {
 	$HOSTPATHREPORT = @()
 	$IOPSREPORT = @()
 	$HostVersion = ([version]$VMHost.Version)
+
+	### Andrew Seifert iSCSI additions ###
+    #Add iscsi Software adapter to the host
+    if ($addSwInitiator) {
+        addIscsiInitiator
+    }
+
+    #Add IQNs to the Tegile
+    if ($addIQNGroup) {
+		#need to see about checking for initiator again - or letting it sleep.....
+		sleep 5
+        addIQNs
+    }
+
+    #Add dynamic IPs
+    if ($addDynamicIps) {
+        addDynamicIps
+    }
+	### End Andrew Seifert iSCSI additions ###
 
 	if ($DatastorePathCheck -or $RDMPathCheck -or $HostPathCheck -or $SetIOPS -or $CheckIOPS) {
 		if ($HostVersion.Major -lt 6) {
@@ -662,6 +957,7 @@ foreach ($VMHost in $VMHosts) {
 	
 	# Check/Apply NFS Best Practice settings if not overridden by -SkipNFS parameter
 	if (!$SkipNFS) {
+		Write-Host "`n---------------------------------------------------------------------"
 		Write-Host "`nChecking NFS Advanced Settings on host $VMHost...`n"
 		$currentnfsqd = (Get-AdvancedSetting -Entity $VMHost -Name NFS.MaxQueueDepth | Select Entity,Name,Value)
 		$currentnfsrpcto = (Get-AdvancedSetting -Entity $VMHost -Name NFS.DeleteRPCTimeout | Select Entity,Name,Value)
@@ -832,17 +1128,56 @@ foreach ($VMHost in $VMHosts) {
 		}
 		
 		# Find any SATP rules with Vendor name "TEGILE":
+		Write-Host "`n---------------------------------------------------------------------"
 		Write-Host "`nChecking SATP rules on host $VMHost..."
-		$satprules = $esxcli.storage.nmp.satp.rule.list.invoke() | Where-Object {$_.Vendor -eq "TEGILE"} | Select Vendor,Model,Name,DefaultPSP,ClaimOPtions,Description,PSPOptions
+		$satprules = $esxcli.storage.nmp.satp.rule.list.invoke() | Where-Object {$_.Vendor -eq "TEGILE"} | Select Vendor,Model,Name,DefaultPSP,ClaimOptions,Description,PSPOptions,RuleGroup | Sort -Property Description | Sort -Property RuleGroup
 		
 		if ($satprules) {
-			Write-Host "`n`nFound the following existing Tegile IntelliFlash SATP rules`n"
+			$systemaluarule = "No"
+			$systemnonaluarule = "No"
+			Write-Host "`n`nFound the following existing Tegile IntelliFlash SATP rules:`n"
 			$satprules
 			foreach ($rule in $satprules) {
+				Write-Host "`n---------------------------------------------------------------------"
 				Write-Host "`nChecking rule:"
 				$rule
-				if ($rule.Description -eq "Tegile arrays with ALUA support") {
-					Write-Host "`This is the current ALUA rule, used only for IntelliFlash LUN's with ALUA support"
+
+				# Check to see if it's a pre-installed rule in the 'system' rule group:
+				if (($rule.Description -eq "Tegile arrays with ALUA support") -and ($rule.RuleGroup -eq "system")) {
+					Write-Host "`nThis is the current ALUA rule, used only for IntelliFlash LUN's without ALUA support"
+					Write-Host "`nThis SATP rule is pre-installed in the 'system' rule group and cannot be changed or removed" -foregroundcolor yellow
+					if (($rule.Name -ne "VMW_SATP_ALUA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_on")) {
+						Write-Host "`nThis rule doesn't precisely match our current preferences, but since it's in the 'system' rule group `n we'll leave it in place and if necessary just add new ALUA rule to 'user' rule group to override it" -foregroundcolor yellow
+						$changerequired = "No"
+						$systemaluarule = "Yes"
+						$tegilealuarule = 1
+					}
+					$currentsatp = New-Object -TypeName PSObject
+					$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
+					$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP ALUA rule in 'system' rule group"
+					$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value $rule
+					$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
+					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
+				}
+				if (($rule.Description -eq "Tegile arrays without ALUA support") -and ($rule.RuleGroup -eq "system")) {
+					Write-Host "`nThis is the current Non-ALUA rule, used only for IntelliFlash LUN's without ALUA support"
+					Write-Host "`nThis SATP rule is pre-installed in the 'system' rule group and cannot be changed or removed" -foregroundcolor yellow
+					if (($rule.Name -ne "VMW_SATP_DEFAULT_AA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_off")) {
+						Write-Host "`nThis rule doesn't precisely match our current preferences, but since it's in the 'system' rule group `n we'll leave it in place and if necessary just add new Non-ALUA rule to 'user' rule group to override it" -foregroundcolor yellow
+						$changerequired = "No"
+						$systemnonaluarule = "Yes"
+						$tegilenonaluarule = 1
+					}
+					$currentsatp = New-Object -TypeName PSObject
+					$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
+					$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP Non-ALUA rule in 'system' rule group"
+					$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value $rule
+					$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
+					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
+				}
+				
+				if (($rule.Description -eq "Tegile arrays with ALUA support") -and ($rule.RuleGroup -ne "system")) {
+					Write-Host "`nThis is the current ALUA rule, used only for IntelliFlash LUN's with ALUA support"
 					if (($rule.Name -ne "VMW_SATP_ALUA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_on")) {
 						Write-Host "`nThis rule has one or more invalid settings and should be removed & replaced!" -foregroundcolor red
 						$changerequired = "Yes"
@@ -859,8 +1194,8 @@ foreach ($VMHost in $VMHosts) {
 					$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
 					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 				}
-				if ($rule.Description -eq "Tegile arrays without ALUA support") {
-					Write-Host "`This is the current Non-ALUA rule, used only for IntelliFlash LUN's without ALUA support"
+				if (($rule.Description -eq "Tegile arrays without ALUA support") -and ($rule.RuleGroup -ne "system")) {
+					Write-Host "`nThis is the current Non-ALUA rule, used only for IntelliFlash LUN's without ALUA support"
 					if (($rule.Name -ne "VMW_SATP_DEFAULT_AA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_off")) {
 						Write-Host "`nThis rule has one or more invalid settings and should be removed & replaced!" -foregroundcolor red
 						$changerequired = "Yes"
@@ -878,7 +1213,7 @@ foreach ($VMHost in $VMHosts) {
 					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 				}
 				if ($rule.Description -eq "Tegile Zebi FC") {
-					Write-Host "`This is a legacy rule, still required for any FC LUN's created prior to IntelliFlash 3.x"
+					Write-Host "`nThis is a legacy rule, still required for any FC LUN's created prior to IntelliFlash 3.x"
 					if (($rule.Name -ne "VMW_SATP_ALUA") -or ($rule.Model -ne "ZEBI-FC") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_on")) {
 						Write-Host "`nThis rule has one or more invalid settings and should be removed & replaced!" -foregroundcolor red
 						$changerequired = "Yes"
@@ -896,7 +1231,7 @@ foreach ($VMHost in $VMHosts) {
 					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 				}				
 				if ($rule.Description -eq "Tegile Zebi iSCSI") {
-					Write-Host "`This is a legacy rule, still required for any iSCSI LUN's created prior to IntelliFlash 3.x"
+					Write-Host "`nThis is a legacy rule, still required for any iSCSI LUN's created prior to IntelliFlash 3.x"
 					if (($rule.Name -ne "VMW_SATP_DEFAULT_AA") -or ($rule.Model -ne "ZEBI-ISCSI") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions)) {
 						Write-Host "`nThis rule has one or more invalid settings and should be removed and replaced!" -foregroundcolor red
 						$changerequired = "Yes"
@@ -926,18 +1261,19 @@ foreach ($VMHost in $VMHosts) {
 				}
 				$HOSTREPORT += $currentsatp
 				
-				if (($changerequired -eq "Yes") -and (!$ReportOnly)) {
+				if (($changerequired -eq "Yes") -and (!$ReportOnly) -and ($systemaluarule -ne "Yes") -and ($systemnonaluarule -ne "Yes")) {
 					$satpparams = $esxcli.storage.nmp.satp.rule.remove.createArgs()
 					$satpparams.model = $rule.Model
 					$satpparams.vendor = $rule.Vendor
 					$satpparams.satp = $rule.Name
 					$satpparams.psp = $rule.DefaultPSP
 					if ($rule.claimoptions -ne "") {$satpparams.claimoption = $rule.ClaimOptions}
-					$satpparams.pspoption = $rule.PSPOptions
+					if ($rule.PSPOptions -ne "") {$satpparams.pspoption = $rule.PSPOptions}
+					if ($rule.Description -ne "") {$satpparams.description = $rule.Description}
 					$satpremoval = $esxcli.storage.nmp.satp.rule.remove.invoke($satpparams)
 					if ($satpremoval -eq $true) {
-						Write-Host "Removal of invalid rule successful!" -foregroundcolor green
-						Write-Host "If host already has LUN's presented for which this rule applied, a reboot is required!" -foregroundcolor yellow
+						Write-Host "`nRemoval of invalid rule successful!" -foregroundcolor green
+						Write-Host "`nIf host already has LUN's presented for which this rule applied, a reboot is required!" -foregroundcolor yellow
 					} else {
 						Write-Host "`nIt seems the removal of the invalid rule did not succeed..." -foregroundcolor red
 					}
@@ -946,7 +1282,10 @@ foreach ($VMHost in $VMHosts) {
 				}
 			}
 		}
-		# Reporting if any individual rules are missing altogether:
+		
+		# Reporting if any individual rules are missing:
+		Write-Host "`n---------------------------------------------------------------------"
+		Write-Host "Checking to see if any SATP rules are missing..."
 		if ($satprules.Description -notcontains "Tegile arrays with ALUA support") {
 			Write-Host "`nThe current ALUA rule is missing" -foregroundcolor red
 			$tegilealuarule = "1"
@@ -954,6 +1293,16 @@ foreach ($VMHost in $VMHosts) {
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
 			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP ALUA rule"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
+			$HOSTREPORT += $currentsatp
+		} elseif (($systemaluarule -eq "Yes") -and ($tegilealuarule -eq "1")) {
+			Write-Host "`nThe current ALUA rule with settings specified is missing from the 'user' rule group" -foregroundcolor red
+			$changerequired = "Yes"
+			$currentsatp = New-Object -TypeName PSObject
+			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
+			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP ALUA rule with specified settings"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
@@ -966,6 +1315,16 @@ foreach ($VMHost in $VMHosts) {
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
 			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP Non-ALUA rule"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
+			$HOSTREPORT += $currentsatp
+		} elseif (($systemnonaluarule -eq "Yes") -and ($tegilenonaluarule -eq "1")) {
+			Write-Host "`nThe current non-ALUA rule with settings specified is missing from the 'user' rule group" -foregroundcolor red
+			$changerequired = "Yes"
+			$currentsatp = New-Object -TypeName PSObject
+			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
+			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP Non-ALUA rule with specified settings"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
@@ -999,8 +1358,8 @@ foreach ($VMHost in $VMHosts) {
 		# Start applying missing rules:
 		if (($tegilealuarule -eq 1) -and (!$ReportOnly)) {
 			Write-Host "`n---------------------------------------------------------------------"
-			Write-Host "We need to add the modern Tegile IntelliFlash ALUA rule" -foregroundcolor yellow
-			Write-Host "Creating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
+			Write-Host "`nWe need to add the modern Tegile IntelliFlash ALUA rule" -foregroundcolor yellow
+			Write-Host "`nCreating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
 			$satpparams = $esxcli.storage.nmp.satp.rule.add.createArgs()
 			$satpparams.description = "Tegile arrays with ALUA support"
 			$satpparams.model = "INTELLIFLASH"
@@ -1012,16 +1371,16 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "Adding rule to host $VMHost..."
 			$result = $esxcli.storage.nmp.satp.rule.add.invoke($satpparams)
 			if ($result -eq $true) {
-				Write-Host "Successfully added this rule!" -foregroundcolor green
-				Write-Host "If host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
+				Write-Host "`nSuccessfully added this rule!" -foregroundcolor green
+				Write-Host "`nIf host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
 			} else {
-				Write-Host "Something went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
+				Write-Host "`nSomething went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
 			}
 		}
 		if (($tegilenonaluarule -eq 1) -and (!$ReportOnly)) {
 			Write-Host "`n---------------------------------------------------------------------"
-			Write-Host "We need to add the modern Tegile IntelliFlash Non-ALUA rule" -foregroundcolor yellow
-			Write-Host "Creating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
+			Write-Host "`nWe need to add the modern Tegile IntelliFlash Non-ALUA rule" -foregroundcolor yellow
+			Write-Host "`nCreating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
 			$satpparams = $esxcli.storage.nmp.satp.rule.add.createArgs()
 			$satpparams.description = "Tegile arrays without ALUA support"
 			$satpparams.model = "INTELLIFLASH"
@@ -1033,16 +1392,16 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "Adding rule to host $VMHost..."
 			$result = $esxcli.storage.nmp.satp.rule.add.invoke($satpparams)
 			if ($result -eq $true) {
-				Write-Host "Successfully added this rule!" -foregroundcolor green
-				Write-Host "If host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
+				Write-Host "`nSuccessfully added this rule!" -foregroundcolor green
+				Write-Host "`nIf host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
 			} else {
-				Write-Host "Something went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
+				Write-Host "`nSomething went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
 			}
 		}
 		if (($tegilelegacyfc -eq 1) -and (!$ReportOnly)) {
 			Write-Host "`n---------------------------------------------------------------------"
-			Write-Host "We need to add the legacy Tegile IntelliFlash FC ALUA rule" -foregroundcolor yellow
-			Write-Host "Creating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
+			Write-Host "`nWe need to add the legacy Tegile IntelliFlash FC ALUA rule" -foregroundcolor yellow
+			Write-Host "`nCreating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
 			$satpparams = $esxcli.storage.nmp.satp.rule.add.createArgs()
 			$satpparams.description = "Tegile Zebi FC"
 			$satpparams.model = "ZEBI-FC"
@@ -1054,16 +1413,16 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "Adding rule to host $VMHost..."
 			$result = $esxcli.storage.nmp.satp.rule.add.invoke($satpparams)
 			if ($result -eq $true) {
-				Write-Host "Successfully added this rule!" -foregroundcolor green
-				Write-Host "If host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
+				Write-Host "`nSuccessfully added this rule!" -foregroundcolor green
+				Write-Host "`nIf host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
 			} else {
-				Write-Host "Something went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
+				Write-Host "`nSomething went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
 			}
 		}
 		if (($tegilelegacyiscsi -eq 1) -and (!$ReportOnly)) {
 			Write-Host "`n---------------------------------------------------------------------"
-			Write-Host "We need to add the legacy Tegile IntelliFlash iSCSI Non-ALUA rule" -foregroundcolor yellow
-			Write-Host "Creating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
+			Write-Host "`nWe need to add the legacy Tegile IntelliFlash iSCSI Non-ALUA rule" -foregroundcolor yellow
+			Write-Host "`nCreating new rule to set Round Robin and an IO Operations Limit of $iopssetting..."
 			$satpparams = $esxcli.storage.nmp.satp.rule.add.createArgs()
 			$satpparams.description = "Tegile Zebi iSCSI"
 			$satpparams.model = "ZEBI-ISCSI"
@@ -1074,15 +1433,16 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "Adding rule to host $VMHost..."
 			$result = $esxcli.storage.nmp.satp.rule.add.invoke($satpparams)
 			if ($result -eq $true) {
-				Write-Host "Successfully added this rule!" -foregroundcolor green
-				Write-Host "If host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
+				Write-Host "`nSuccessfully added this rule!" -foregroundcolor green
+				Write-Host "`nIf host already has LUN's presented for which this rule applies, a reboot is required!" -foregroundcolor yellow
 			} else {
-				Write-Host "Something went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
+				Write-Host "`nSomething went wrong when adding rule, manual intervention probably required here!" -foregroundcolor red
 			}
 		}
 		
 		if (!$SkipATS) {
 			# Check ATS for VMFS Heartbeat setting, disable it if not in ReportOnly mode and it's currently enabled:
+			Write-Host "`n---------------------------------------------------------------------"
 			Write-Host "`nChecking to make sure that VMFS Heartbeat is not using ATS..."
 			$currentvmfshb = (Get-AdvancedSetting -Entity $VMHost -Name VMFS3.UseATSForHBOnVMFS5 | Select Entity,Name,Value)
 			if ($currentvmfshb.Value -ne "$tegilevmfshb") {
@@ -1175,7 +1535,7 @@ foreach ($VMHost in $VMHosts) {
 		Write-Host "`nNo additional changes needed for host $VMHost`n"
 	}
 	
-	Write-Host "`Finished with host $VMHost, continuing...`n"
+	Write-Host "`nFinished with host $VMHost, continuing...`n"
 }
 Write-Host "`nCompleted checking/updating all hosts!`n" -foregroundcolor green
 Write-Host "`nHost Report and Log files are available in: $logdir`n" -foregroundcolor yellow
