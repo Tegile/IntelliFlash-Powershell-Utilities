@@ -1,14 +1,16 @@
 ## Tegile IntelliFlash cmdlet module
-## Version v3.7.1.3:
+## Version 3.7.1.4:
+## Added Get-IntelliFlashFloatingIPList
+##
+## Previous Version 3.7.1.3:
 ## Fixed Add-IntelliFlashProjectLUNMapping ReadOnly parameter
 ##
-## Tegile IntelliFlash cmdlet module
-## Version v3.7.1.2:
+## Previous Version 3.7.1.2:
 ## Added Get-IntelliFlashProjectNFSNetworkACL
 ## Added Add-IntelliFlashProjectNFSNetworkACL
 ## Added Remove-IntelliFlashProjectNFSNetworkACL
 ##
-## Previous Version v3.7.1.1:
+## Previous Version 3.7.1.1:
 ## Added support for replica project clones
 ## Added Remove-IntelliFlashProject
 ## Added Set-IntelliFlashShareProperty
@@ -2332,7 +2334,7 @@ function Get-IntelliFlashTargetGroupList {
             $Global:ArrayTable = @()
             $Global:ArrayTable = $NewCred
         }	
-}
+	}
 }
 function Get-IntelliFlashTargetGroup {
     [CmdletBinding()]
@@ -5148,5 +5150,69 @@ function Remove-IntelliFlashProjectNFSNetworkACL {
 	}
 	End{
 		Write-Output $RemoveProjectNFSNetworkACLReport
+	}
+}
+function Get-IntelliFlashFloatingIPList {
+    [CmdletBinding()]
+	Param (
+		[Parameter()]
+		[String[]]$Array,
+		[Parameter()]
+		[String]$ArrayUserName,
+		[Parameter()]
+		[String]$ArrayPassword
+    )
+    Begin{
+        if (!$global:ArrayTable) {
+            If ($Array -and $ArrayUserName -and $ArrayPassword){
+                CLV CLINE -EA SilentlyContinue
+                $CLINE = @()
+                $CLINEReport = New-Object -TypeName PSObject
+                $CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+                $CLINE = $CLINEReport
+                [void]($CLINE |Connect-IntelliFlash)
+                }Else{
+                [void](Connect-IntelliFlash)
+            }
+        }
+        CLV IPReport -EA SilentlyContinue
+        $IPReport = @()
+		[void]($PoolReport = Get-IntelliFlashPoolList)
+    }
+    Process{
+        ForEach ($Pool in $PoolReport) {
+            $CurrentArray = $Pool.Array
+            $Cred = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select Cred
+            $Cred = $Cred.Cred
+            $APIVer = $Pool.APIVer
+            $PoolName = $Pool.PoolName
+            Write-Verbose "`nLooking for Floating IP's for '$CurrentArray | $PoolName'..."
+	        $url = "https://$CurrentArray/zebi/api/$APIVer/getFloatingIPList"
+	        $postParams = "[`"$poolname`"]"
+			Write-Debug $postParams
+	        $FloatingIPs = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+            ForEach ($IP in $FloatingIPs){
+                    $EachIP = New-Object -TypeName PSObject
+                    $EachIP | Add-Member -Type NoteProperty -Name Array -Value $CurrentArray
+                    $EachIP | Add-Member -Type NoteProperty -Name ResourceGroupName -Value $IP.resourceGroupName
+                    $EachIP | Add-Member -Type NoteProperty -Name PoolName -Value $IP.poolName
+                    $EachIP | Add-Member -Type NoteProperty -Name IPAddress -Value $IP.ipAddress
+                    $EachIP | Add-Member -Type NoteProperty -Name Netmask -Value $IP.netmask
+                    $EachIP | Add-Member -Type NoteProperty -Name FailoverMode -Value $IP.failoverMode
+                    $EachIP | Add-Member -Type NoteProperty -Name Description -Value $IP.description
+                    $IPReport += $EachIP
+            }
+	    }
+    }
+    End{
+        Write-Output $IPReport
+        If ($Array -and $ArrayUserName -and $ArrayPassword){
+            $NewCred = $global:ArrayTable |Where {$_.Array -ne $Array}
+            CLV ArrayTable -Scope Global -EA SilentlyContinue
+            $Global:ArrayTable = @()
+            $Global:ArrayTable = $NewCred
+        }	
 	}
 }
