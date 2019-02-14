@@ -151,9 +151,9 @@ http://www.westerndigital.com/
 $MajorVer = 3
 $MinorVer = 7
 $PatchVer = 1
-$BuildVer = 3
+$BuildVer = 4
 $VerMonth = 02
-$VerDay = 12
+$VerDay = 13
 $VerYear = 2019
 $Author = "Ben Kendall, WDC DCS IntelliFlash Professional Services"
 
@@ -303,15 +303,26 @@ if ("$?" -eq "False") {
 	Exit 1
 }
 
-# Connect to IntelliFlash Array:
-Connect-IntelliFlash -Array $Array -ArrayUserName $IFUser -ArrayPassword $IFPassword
+# Connect to specified IntelliFlash Array after first disconnecting any others:
+Write-Host "`nConnecting to Array $Array and disconnecting any others..."
 $IFArray = Show-IntelliFlash
-if ($IFArray.Array -notcontains "$Array") {
-	Write-Host "Connection to IntelliFlash appears to have failed, exiting...`n" -foregroundcolor red
-	Stop-Transcript
-	Exit 1
+foreach ($Arr in $IFArray) {
+	if ($Arr.Array -ne $Array) {
+		[void](Disconnect-IntelliFlash -Array $Arr.Array)
+	}
+}
+if ($IFArray.Array -eq $Array) {
+	Write-Host "`nAlready connected to Array '$Array'" -foregroundcolor green
 } else {
-	Write-Host "Connected to array '$Array'"
+	Connect-IntelliFlash -Array $Array -ArrayUserName $IFUser -ArrayPassword $IFPassword
+	$IFArray = Show-IntelliFlash
+	if ($IFArray.Array -ne $Array) {
+		Write-Host "Connection to IntelliFlash appears to have failed, exiting...`n" -foregroundcolor red
+		Stop-Transcript
+		Exit 1
+	} else {
+		Write-Host "Successfully connected to array '$Array'" -foregroundcolor green
+	}
 }
 
 # Report on provided parameters:
@@ -319,15 +330,23 @@ Write-Host "`nWe'll be cloning Projects: $Projects"
 $Projects = $Projects -split ','
 
 if ($NFSServerIP) {
-	Write-Host "`nWe'll be using NFS Server: $NFSServerIP"
-	if (!$NACLHost) {
-		Write-Host "`nYou did not specify -NACLHost, so if appropriate NFS subnet/IP's are not already in properties of cloned Project(s) this will fail" -foregroundcolor yellow
-		$answer = Read-Host "`nEnter 'y' to specify -NACLHost now, anything else to just continue"
-		if ($answer -eq "y") {
-			$NACLHost = Read-Host "`nEnter comma-separated list of IP's for the NFS NACL"
-			$NACLHost = $NACLHost -split ','
-		} else {
-			Write-Host "`nContinuing without -NACLHost..." foregroundcolor yellow
+	Write-Host "`nYou specified NFS Server IP '$NFSServerIP', checking to be sure it exists..."
+	$FloatingIP = Get-IntelliFlashFloatingIPList | Where {$_.IPAddress -eq $NFSServerIP}
+	if (!$FloatingIP) {
+		Write-Host "`nThat IP does not exist as a Floating IP on Array '$Array', exiting!`n" -foregroundcolor red
+		Stop-Transcript
+		Exit 1
+	} else {
+		Write-Host "`n'$NFSServerIP' is a valid Floating IP for IntelliFlash pool:" $FloatingIP.PoolName -foregroundcolor green
+		if (!$NACLHost) {
+			Write-Host "`nYou did not specify -NACLHost, so if appropriate NFS subnet/IP's are not already in properties of cloned Project(s) this will fail" -foregroundcolor yellow
+			$answer = Read-Host "`nEnter 'y' to specify -NACLHost now, anything else to just continue"
+			if ($answer -eq "y") {
+				$NACLHost = Read-Host "`nEnter comma-separated list of IP's for the NFS NACL"
+				$NACLHost = $NACLHost -split ','
+			} else {
+				Write-Host "`nContinuing without -NACLHost..." foregroundcolor yellow
+			}
 		}
 	}
 }
@@ -419,6 +438,19 @@ foreach ($proj in $Projects) {
 	}
 }
 
+# If NFSServerIP was specified, make sure the specified Projects are all for the same pool:
+if ($NFSServerIP) {
+	foreach ($proj in $ProjectsToClone) {
+		if ($proj.PoolName -ne $FloatingIP.PoolName) {
+			Write-Host "`nProject" $proj.ProjectName "is in pool" $proj.PoolName -foregroundcolor red
+			Write-Host "`nBut the specified NFSServerIP $NFSServerIP is for pool:" $FloatingIP.PoolName -foregroundcolor red
+			Write-host "`nExiting!`n" -foregroundcolor red
+			Stop-Transcript
+			Exit 1
+		}
+	}
+}
+
 # Clone all the Replica projects, using the latest replica snapshot:
 Write-Host "`nCloning the Projects...`n"
 $clones = @()
@@ -455,7 +487,9 @@ if ($NFSServerIP) {
 	$projectswithshares = @()
 	foreach ($share in $sharestomount) {
 		foreach ($proj in $clones) {
-			if (($share.ProjectName -eq $proj.CloneName) -and ($projectswithshares.ProjectName -notcontains $proj.ProjectName)) {$projectswithshares += $proj}
+			if (($share.ProjectName -eq $proj.CloneName) -and ($projectswithshares.ProjectName -notcontains $proj.ProjectName)) {
+				$projectswithshares += $proj
+			}
 		}
 	}
 
@@ -475,7 +509,9 @@ if ($TargetGroup) {
 	$projectswithluns = @()
 	foreach ($lun in $lunstomount) {
 		foreach ($proj in $clones) {
-			if (($lun.ProjectName -eq $proj.CloneName) -and ($projectswithluns.ProjectName -notcontains $proj.ProjectName)) {$projectswithluns += $proj}
+			if (($lun.ProjectName -eq $proj.CloneName) -and ($projectswithluns.ProjectName -notcontains $proj.ProjectName)) {
+				$projectswithluns += $proj
+			}
 		}
 	}
 
