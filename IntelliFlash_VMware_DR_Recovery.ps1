@@ -151,9 +151,9 @@ http://www.westerndigital.com/
 $MajorVer = 3
 $MinorVer = 7
 $PatchVer = 1
-$BuildVer = 4
+$BuildVer = 5
 $VerMonth = 02
-$VerDay = 13
+$VerDay = 17
 $VerYear = 2019
 $Author = "Ben Kendall, WDC DCS IntelliFlash Professional Services"
 
@@ -305,24 +305,19 @@ if ("$?" -eq "False") {
 
 # Connect to specified IntelliFlash Array after first disconnecting any others:
 Write-Host "`nConnecting to Array $Array and disconnecting any others..."
-$IFArray = Show-IntelliFlash
-foreach ($Arr in $IFArray) {
+foreach ($Arr in $Global:ArrayTable) {
 	if ($Arr.Array -ne $Array) {
 		[void](Disconnect-IntelliFlash -Array $Arr.Array)
 	}
 }
-if ($IFArray.Array -eq $Array) {
-	Write-Host "`nAlready connected to Array '$Array'" -foregroundcolor green
+Connect-IntelliFlash -Array $Array -ArrayUserName $IFUser -ArrayPassword $IFPassword
+$IFArray = Show-IntelliFlash
+if ($IFArray.Array -ne $Array) {
+	Write-Host "Connection to IntelliFlash appears to have failed, exiting...`n" -foregroundcolor red
+	Stop-Transcript
+	Exit 1
 } else {
-	Connect-IntelliFlash -Array $Array -ArrayUserName $IFUser -ArrayPassword $IFPassword
-	$IFArray = Show-IntelliFlash
-	if ($IFArray.Array -ne $Array) {
-		Write-Host "Connection to IntelliFlash appears to have failed, exiting...`n" -foregroundcolor red
-		Stop-Transcript
-		Exit 1
-	} else {
-		Write-Host "Successfully connected to array '$Array'" -foregroundcolor green
-	}
+	Write-Host "Successfully connected to array '$Array'" -foregroundcolor green
 }
 
 # Report on provided parameters:
