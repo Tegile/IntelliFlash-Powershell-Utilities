@@ -1,5 +1,10 @@
 ## Tegile IntelliFlash cmdlet module
-## Version 3.7.1.4:
+## Version 3.7.1.5:
+## Added Get-IntelliFlashProjectPropertiesList
+## Added Get-IntelliFlashProjectProperties
+## Added Add-IntelliFlashProject
+##
+## Previous Version 3.7.1.4:
 ## Added Get-IntelliFlashFloatingIPList
 ##
 ## Previous Version 3.7.1.3:
@@ -4877,29 +4882,29 @@ function Get-IntelliFlashProjectNFSNetworkACL {
     [CmdletBinding()]
 	Param (
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$PoolName,
+		[String[]]$PoolName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$ProjectName,
+		[String[]]$ProjectName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$Array,
+		[String[]]$Array,
 		[Parameter()]
 		[String]$ArrayUserName,
 		[Parameter()]
 		[String]$ArrayPassword
     )
     Begin{
-        if (!$global:ArrayTable) {
-            If ($Array -and $ArrayUserName -and $ArrayPassword){
-                CLV CLINE -EA SilentlyContinue
-                $CLINE = @()
-                $CLINEReport = New-Object -TypeName PSObject
-                $CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
-                $CLINE = $CLINEReport
-                [void]($CLINE |Connect-IntelliFlash)
-                }Else{
-                [void](Connect-IntelliFlash)
+		if (!$global:ArrayTable) {
+			If ($Array -and $ArrayUserName -and $ArrayPassword){
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
             }
         }
     CLV ProjectNFSNetworkACLReport -EA SilentlyContinue
@@ -4915,6 +4920,7 @@ function Get-IntelliFlashProjectNFSNetworkACL {
 		Write-Verbose "`nLooking for Network ACL's for Project '$DataSetPath' on Array '$Array'"
 		$url = "https://$Array/zebi/api/$APIVer/getNFSNetworkACLsOnProject"
 		$postParams = "[`"" + $DataSetPath + "`"]"
+		Write-Debug $url
 		Write-Debug $postParams
 		$projectnacl = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
 		ForEach ($nacl in $projectnacl){
@@ -4937,20 +4943,20 @@ function Add-IntelliFlashProjectNFSNetworkACL {
     [CmdletBinding()]
 	Param (
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$PoolName,
+		[String[]]$PoolName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$ProjectName,
+		[String[]]$ProjectName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$Array,
+		[String[]]$Array,
 		[Parameter(Mandatory=$true)]
 		[ValidateSet("IP", "FQDN", ignorecase=$False)]
-		[String]$HostType,
+		[String[]]$HostType,
 		[Parameter(Mandatory=$true)]
-		[String]$NACLHost,
+		[String[]]$NACLHost,
 		[Parameter(Mandatory=$true)]
 		[ValidateSet("rw", "ro", ignorecase=$False)]
-		[String]$AccessMode,
-		[Parameter(Mandatory=$false)]
+		[String[]]$AccessMode,
+		[Parameter()]
 		[Switch]$RootAccessForNFS,
 		[Parameter()]
 		[String]$ArrayUserName,
@@ -4959,17 +4965,17 @@ function Add-IntelliFlashProjectNFSNetworkACL {
     )
     Begin{
         if (!$global:ArrayTable) {
-            If ($Array -and $ArrayUserName -and $ArrayPassword){
-                CLV CLINE -EA SilentlyContinue
-                $CLINE = @()
-                $CLINEReport = New-Object -TypeName PSObject
-                $CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
-                $CLINE = $CLINEReport
-                [void]($CLINE |Connect-IntelliFlash)
-                }Else{
-                [void](Connect-IntelliFlash)
+			If ($Array -and $ArrayUserName -and $ArrayPassword){
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
             }
         }
 	if ($RootAccessForNFS) {$root = "true"} else {$root = "false"}
@@ -4987,6 +4993,7 @@ function Add-IntelliFlashProjectNFSNetworkACL {
 		Write-Verbose "`nAdding Network ACL's for Project '$DataSetPath' on Array '$Array'"
 		$url = "https://$Array/zebi/api/$APIVer/addNFSNetworkACLOnProject"
 		$postParams = "[`"" + $DataSetPath + "`", " + "`"" + $HostType +"`", " + "`"" + $NACLHost +"`", " + "`"" + $AccessMode +"`", $root]"
+		Write-Debug $url
 		Write-Debug $postParams
 		$AddProjectNACL = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
 		If ($AddProjectNACL -eq 0) {
@@ -5023,13 +5030,13 @@ function Remove-IntelliFlashProjectNFSNetworkACL {
     [CmdletBinding()]
 	Param (
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$PoolName,
+		[String[]]$PoolName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$ProjectName,
+		[String[]]$ProjectName,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$Array,
+		[String[]]$Array,
 		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
-		[String]$NACLHost,
+		[String[]]$NACLHost,
 		[Parameter()]
         [Switch]$Force,
 		[Parameter()]
@@ -5040,16 +5047,16 @@ function Remove-IntelliFlashProjectNFSNetworkACL {
     Begin{
         if (!$global:ArrayTable) {
             If ($Array -and $ArrayUserName -and $ArrayPassword){
-                CLV CLINE -EA SilentlyContinue
-                $CLINE = @()
-                $CLINEReport = New-Object -TypeName PSObject
-                $CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
-                $CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
-                $CLINE = $CLINEReport
-                [void]($CLINE |Connect-IntelliFlash)
-                }Else{
-                [void](Connect-IntelliFlash)
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
             }
         }
     CLV RemoveProjectNFSNetworkACLReport -EA SilentlyContinue
@@ -5067,6 +5074,7 @@ function Remove-IntelliFlashProjectNFSNetworkACL {
 		Write-Verbose "`nRemoving Network ACL's for Project '$DataSetPath' on Array '$Array'"
 		$url = "https://$Array/zebi/api/$APIVer/removeNFSNetworkACLOnProject"
 		$postParams = "[`"" + $DataSetPath + "`", " + "`"" + $HostType +"`", " + "`"" + $NACLHost +"`"]"
+		Write-Debug $url
 		Write-Debug $postParams
 		If ($ExistingNACL) {
 			If ($Force) {
@@ -5191,6 +5199,7 @@ function Get-IntelliFlashFloatingIPList {
             Write-Verbose "`nLooking for Floating IP's for '$CurrentArray | $PoolName'..."
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/getFloatingIPList"
 	        $postParams = "[`"$poolname`"]"
+			Write-Debug $url
 			Write-Debug $postParams
 	        $FloatingIPs = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
             ForEach ($IP in $FloatingIPs){
@@ -5214,5 +5223,266 @@ function Get-IntelliFlashFloatingIPList {
             $Global:ArrayTable = @()
             $Global:ArrayTable = $NewCred
         }	
+	}
+}
+function Get-IntelliFlashProjectPropertiesList {
+    [CmdletBinding()]
+	Param (
+		[Parameter()]
+		[String[]]$Array,
+		[Parameter()]
+		[String]$ArrayUserName,
+		[Parameter()]
+		[String]$ArrayPassword
+	)
+	Begin{
+		if (!$global:ArrayTable) {
+			If ($Array -and $ArrayUserName -and $ArrayPassword){
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
+			}
+		}
+		$ProjPropertiesReport = @()
+		[void]($PoolReport = Get-IntelliFlashPoolList)
+	}
+	Process{
+		ForEach ($Pool in $PoolReport) {
+			$CurrentArray = $Pool.Array
+			$Cred = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select Cred
+			$Cred = $Cred.Cred
+			$APIVer = $Pool.APIVer
+			$PoolName = $Pool.PoolName
+			Write-Verbose "`nLooking for Projects in '$CurrentArray | $PoolName'..."
+			$url = "https://$CurrentArray/zebi/api/$APIVer/listProjects"
+			$postParams = "[`"$PoolName`",`"true`"]"
+			Write-Debug $url
+			Write-Debug $postParams
+			$projects = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+			ForEach ($proj in $projects) {
+				$PROJECTFULLPATH = $proj.poolName + "/Local/" + $proj.name
+				Write-Debug $PROJECTFULLPATH
+				$url = "https://$CurrentArray/zebi/api/v2/getProjectProperty"
+				Write-Debug $url
+				$EachProj = New-Object -TypeName PSObject
+				$EachProj | Add-Member -Type NoteProperty -Name Array -Value $CurrentArray
+				$EachProj | Add-Member -Type NoteProperty -Name PoolName -Value $proj.PoolName
+				$EachProj | Add-Member -Type NoteProperty -Name ProjectName -Value $proj.name
+				Write-Verbose "Getting Project property 'Purpose' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"purpose`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name Purpose -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'IntendedProtocolList' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"intendedProtocolList`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name IntendedProtocolList -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'Compression' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"compression`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name Compression -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'Deduplication' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"dedup`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name Deduplication -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'RecordSize' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"recordSize`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name RecordSize -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'DefaultVolumeSize' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"defaultVolumeSize`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name DefaultVolumeSize -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'DefaultVolumeBlockSize' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"defaultVolumeBlockSize`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name DefaultVolumeBlockSize -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'QuotaEnabled' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"quotaEnabled`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name QuotaEnabled -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'Quota' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"quota`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name Quota -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'QuotaMetric' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"quotaMetric`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name QuotaMetric -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'PrimaryCache' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"primaryCache`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name PrimaryCache -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'SecondaryCache' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"secondaryCache`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name SecondaryCache -Value $projProperty.propertyValue
+				$ProjPropertiesReport += $EachProj
+			}
+		}
+	}
+	End{
+		Write-Output $ProjPropertiesReport
+	}
+}
+function Get-IntelliFlashProjectProperties {
+    [CmdletBinding()]
+	Param (
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$PoolName,
+        [Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$ProjectName,
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$Array,
+		[Parameter()]
+		[String]$ArrayUserName,
+		[Parameter()]
+		[String]$ArrayPassword
+	)
+	Begin{
+		if (!$global:ArrayTable) {
+			If ($Array -and $ArrayUserName -and $ArrayPassword){
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
+			}
+		}
+		$ProjPropertiesReport = @()
+		[void]($ProjPropertiesReport = Get-IntelliFlashProjectPropertiesList)
+	}
+	Process{
+		Write-Output $ProjPropertiesReport |Where-Object {$_.ProjectName -EQ "$ProjectName" -and $_.Array -EQ "$Array"}
+	}
+	End{
+		If ($Array -and $ArrayUserName -and $ArrayPassword){
+			$NewCred = $global:ArrayTable |Where {$_.Array -ne $Array}
+			CLV ArrayTable -Scope Global -EA SilentlyContinue
+			$Global:ArrayTable = @()
+			$Global:ArrayTable = $NewCred
+		}
+	}
+}
+function Add-IntelliFlashProject {
+	[CmdletBinding()]
+	Param (
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$Array,
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$PoolName,
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[String[]]$ProjectName,
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[ValidateSet("lz4", "igzip", "gzip", "off")]
+		[string[]]$Compression,
+		[Parameter(Mandatory=$true, ValueFromPipelineByPropertyName=$True)]
+		[ValidateSet("on", "off")]
+		[string[]]$Deduplication,
+		[Parameter()]
+		[Switch]$Protocol_NFS,
+		[Parameter()]
+		[Switch]$Protocol_iSCSI,
+		[Parameter()]
+		[Switch]$Protocol_FC,
+		[Parameter()]
+		[Switch]$Protocol_SMB,
+		[Parameter()]
+		[String]$ArrayUserName,
+		[Parameter()]
+		[String]$ArrayPassword
+	)
+	Begin{
+		if (!$global:ArrayTable) {
+			If ($Array -and $ArrayUserName -and $ArrayPassword){
+				CLV CLINE -EA SilentlyContinue
+				$CLINE = @()
+				$CLINEReport = New-Object -TypeName PSObject
+				$CLINEReport | Add-Member -Type NoteProperty -Name Array -Value $Array
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayUserName -Value $ArrayUserName
+				$CLINEReport | Add-Member -Type NoteProperty -Name ArrayPassword -Value $ArrayPassword
+				$CLINE = $CLINEReport
+				[void]($CLINE |Connect-IntelliFlash)
+				}Else{
+				[void](Connect-IntelliFlash)
+			}
+		}
+		$NewProjectReport = @()
+		CLV IPL -EA SilentlyContinue
+		if ($Protocol_NFS) {$IPL = "`"NFS`""}
+		if ($Protocol_iSCSI) {if (!$IPL) {$IPL = "`"iSCSI`""} else {$IPL = $IPL + ", `"iSCSI`""}}
+		if ($Protocol_FC) {if (!$IPL) {$IPL = "`"FC`""} else {$IPL = $IPL + ", `"FC`""}}
+		if ($Protocol_SMB) {if (!$IPL) {$IPL = "`"SMB`""} else {$IPL = $IPL + ", `"SMB`""}}
+	}
+	Process{
+		ForEach ($ArrayTgt in $global:ArrayTable.Array){
+			If ($ArrayTgt -eq $Array){
+				$Cred = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select Cred
+				$Cred = $Cred.Cred
+				$IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
+				$IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
+				If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+				$url = "https://$ArrayTgt/zebi/api/$APIVer/createProject"
+				$postParams = "[{`"poolName`":`"" + $PoolName + "`", `"projectName`":`"" + $ProjectName + "`", `"intendedProtocolList`":[" +  $IPL + "], `"compression`":`"" +  $Compression + "`", `"dedup`":`"" +  $Deduplication + "`"}]"
+				Write-Debug $url
+				Write-Debug $postParams
+				$projCreate = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Header $Cred -Body $postParams
+				If ($?){
+					$EachProj = New-Object -TypeName PSObject
+					$EachProj | Add-Member -Type NoteProperty -Name Array -Value $ArrayTgt
+					$EachProj | Add-Member -Type NoteProperty -Name PoolName -Value $PoolName[0]
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectName -Value $ProjectName[0]
+					$EachProj | Add-Member -Type NoteProperty -Name IntendedProtocolList -Value $IPL
+					$EachProj | Add-Member -Type NoteProperty -Name Compression -Value $Compression[0]
+					$EachProj | Add-Member -Type NoteProperty -Name Deduplication -Value $Deduplication[0]
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectCreationStatus -Value "True"
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectCreated -Value "True"
+					$NewProjectReport += $EachProj
+				} Else {
+					$EachProj = New-Object -TypeName PSObject 
+					$EachProj | Add-Member -Type NoteProperty -Name Array -Value $ArrayTgt
+					$EachProj | Add-Member -Type NoteProperty -Name PoolName -Value $PoolName[0]
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectName -Value $ProjectName[0]
+					$EachProj | Add-Member -Type NoteProperty -Name IntendedProtocolList -Value $IPL
+					$EachProj | Add-Member -Type NoteProperty -Name Compression -Value $Compression[0]
+					$EachProj | Add-Member -Type NoteProperty -Name Deduplication -Value $Deduplication[0]
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectCreationStatus -Value "False"
+					$EachProj | Add-Member -Type NoteProperty -Name ProjectCreated -Value "False"
+					$NewProjectReport += $EachProj
+				}
+			}
+		} 
+	}
+	End{
+		If ($Array -and $ArrayUserName -and $ArrayPassword){
+			$NewCred = $global:ArrayTable |Where {$_.Array -ne $Array}
+			CLV ArrayTable -Scope Global -EA SilentlyContinue
+			$Global:ArrayTable = @()
+			$Global:ArrayTable = $NewCred
+		}
+		Write-Output $NewProjectReport
 	}
 }
