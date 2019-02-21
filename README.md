@@ -1,2 +1,2 @@
-# Tegile-Powershell-Utilities
-Tegile Powershell Utilities
+# IntelliFlash-Powershell-Utilities
+IntelliFlash Powershell Utilities
