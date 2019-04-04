@@ -1,5 +1,9 @@
 ## Tegile IntelliFlash cmdlet module
-## Version 3.7.1.5:
+## Version 3.9.1.0:
+## Fixed API Version Check on IntelliFlash OS 3.10.0.0
+## Updated Get-IntelliFlashProjectPropertiesList with additional property
+##
+## Previous Version 3.7.1.5:
 ## Added Get-IntelliFlashProjectPropertiesList
 ## Added Get-IntelliFlashProjectProperties
 ## Added Add-IntelliFlashProject
@@ -212,7 +216,7 @@ function Get-IntelliFlashPoolList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$Array/zebi/api/$APIVer/listPools"
 	        $postParams = "[]"
 			Write-Debug $postParams
@@ -285,7 +289,7 @@ function Get-IntelliFlashNASGroupList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$Array/zebi/api/$APIVer/listGroups"
 	        $postParams = "[]"
 			Write-Debug $postParams
@@ -351,7 +355,7 @@ function Get-IntelliFlashNASUserList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$Array/zebi/api/$APIVer/listUsers"
 	        $postParams = "[]"
 			Write-Debug $postParams
@@ -420,7 +424,7 @@ function Add-IntelliFlashNASGroup {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/createGroup"
 	        $CurrentGroupName = $GroupName[$i]
             $CurrentGroupID = $GroupID[$i]
@@ -500,7 +504,7 @@ function Add-IntelliFlashNASUser {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/createUser"
 	        $CurrentUserName = $UserName[$i]
             $CurrentUserID = $UserID[$i]
@@ -582,7 +586,7 @@ function Remove-IntelliFlashNASUser {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/deleteUser"
 	        $CurrentUserName = $UserName[$i]
             $postParams = "[`"$CurrentUserName`"]"
@@ -690,7 +694,7 @@ function Remove-IntelliFlashNASGroup {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/deleteGroup"
 	        $CurrentGroupName = $GroupName[$i]
             $postParams = "[`"$CurrentGroupName`"]"
@@ -948,7 +952,7 @@ function Get-IntelliFlashLUNList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             If (!$ProjectList){Write-progress -id 1 -activity "Collecting LUNs from $CurrentArray/$ProjectName" -status "Progress:" -percentcomplete ($p/$ProjectList.count*100)}
             $url = "https://$CurrentArray/zebi/api/$APIVer/listVolumes"
 	        $postParams = "[`"$poolname`",`"$projectname`",`"$local`"]"
@@ -1075,7 +1079,7 @@ function Get-IntelliFlashShareList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/listShares"
 	        $postParams = "[`"$PoolName`",`"$ProjectName`",`"$local`"]"
 			Write-Debug $postParams
@@ -1214,7 +1218,7 @@ function Add-IntelliFlashLUN {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $LUNSize = [string]$LUNSizeGB
                 $LUNSizeGB = [decimal]$LUNSize *1024*1024*1024
                 $DataSetPath = "$PoolName/Local/$ProjectName"
@@ -1322,7 +1326,7 @@ function Add-IntelliFlashLUNSet {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $LUNSize = [string]$LUNSizeGB
                 $LUNSizeGB = [decimal]$LUNSize *1024*1024*1024
                 $DataSetPath = "$PoolName/Local/$ProjectName"
@@ -1467,7 +1471,7 @@ function Add-IntelliFlashShare {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$ArrayTgt/zebi/api/$APIVer/createShare"
                 $postParams = "[`"" + $PoolName + "`", `"" + $ProjectName + "`", `"" + $ShareName + "`",{`"blockSize`":`"" + $BlockSize + "`", `"quota`": $SQ, `"reservation`": $SR, `"mountPoint`":`"" +  $ShareMountPoint + "`"},[{`"sharePermissionMode`":0,`"sharePermissionEnum`":0,`"groupList`":[{`"groupId`":`"`",`"groupName`":`"`"}]}]]"
 				Write-Debug $postParams
@@ -1574,7 +1578,7 @@ function Add-IntelliFlashShareSet {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$ArrayTgt/zebi/api/$APIVer/createShare"
                 
 				$i=0
@@ -1696,7 +1700,7 @@ function Remove-IntelliFlashLUN {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $DataSetPath = "$PoolName/Local/$ProjectName/$LUNName"
                 $url = "https://$ArrayTgt/zebi/api/$APIVer/deleteVolume"
                 $postParams = "[`"" + $DataSetPath + "`", $RD, true]"
@@ -1811,7 +1815,7 @@ function Remove-IntelliFlashShare {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $DataSetPath = "$PoolName/Local/$ProjectName/$ShareName"
                 $url = "https://$ArrayTgt/zebi/api/$APIVer/deleteShare"
                 $postParams = "[`"" + $DataSetPath + "`", $RD, true]"
@@ -1923,7 +1927,7 @@ function Get-IntelliFlashReplicationList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/getReplicationConfigList"
 	        $postParams = "[`"$PoolName`",`"$ProjectName`"]"
 			Write-Debug $postParams
@@ -2038,7 +2042,7 @@ function Start-IntelliFlashReplication {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$Array/zebi/api/$APIVer/startReplication"
 	        $postParams = "[{`"projectName`":`"" + $SourceProjectName + "`",`"remoteProjectName`":`"" + $TargetProjectName + "`",`"remoteBaseDataSetName`":`"" + $TargetDataSetFullPath + "`",`"poolName`":`"" + $SourcePoolName + "`",`"lastSnapshotName`":`"" + $LastSnapshotName + "`",`"scopeOption`":" + $ReplicationScope + ",`"remoteHost`":`"" + $TargetArray + "`",`"baseDataSetName`":`"" + $SourceDataSetFullPath + "`",`"id`":" + $ReplicationIndex + ",`"projectGuid`":`"" + $ReplicationGUID + "`",`"remotePoolName`":`"" + $TargetPoolName + "`"}]"
 			Write-Debug $postParams
@@ -2112,7 +2116,7 @@ function Get-IntelliFlashInitiatorGroupList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$Array/zebi/api/$APIVer/listISCSIInitiatorGroups"
 	        $postParams = "[]"
 			Write-Debug $postParams
@@ -2236,7 +2240,7 @@ function Get-IntelliFlashInitiatorGroupMember {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/listInitiatorsInInitiatorGroup"
 	        $postParams = "[`"$CurrentGroup`"]"
 			Write-Debug $postParams
@@ -2304,7 +2308,7 @@ function Get-IntelliFlashTargetGroupList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/listISCSITargetGroups"
 	        $postParams = "[]"
 			Write-Debug $postParams
@@ -2432,7 +2436,7 @@ function Get-IntelliFlashTargetGroupMember {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/listTargetsInTargetGroup"
 	        $postParams = "[`"$CurrentTargetGroup`"]"
 			Write-Debug $postParams
@@ -2507,7 +2511,7 @@ function Add-IntelliFlashInitiatorGroup {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$CurrentArray/zebi/api/$APIVer/createInitiatorGroup"
                 $NewInitGroup = $InitiatorGroup[$i]
                 $postParams = "[`"$NewInitGroup`"]"
@@ -2580,7 +2584,7 @@ function Add-IntelliFlashInitiatorGroupMember {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/addInitiatorToInitiatorGroup"
 	        $CurrentInitGroupMember = $InitiatorGroupMember[$i]
             $CurrentInitGroup = $InitiatorGroup[$i]
@@ -2654,7 +2658,7 @@ function Add-IntelliFlashiSCSIInitiator {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/createIscsiInitiator"
 	        $CurrentInit = $iSCSIInitiatorIQN[$i]
             $postParams = "[{`"initiatorName`":`"$CurrentInit`"}]"
@@ -2737,7 +2741,7 @@ function Add-IntelliFlashLUNMapping {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/createMappingForVolume"
 	        $CurrentInitGroup = $InitiatorGroup[$i]
             $CurrentTgtGroup = $TargetGroup[$i]
@@ -2829,7 +2833,7 @@ function Remove-IntelliFlashLUNMapping {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/deleteMappingFromVolume"
             $CurrentInitGroup = $InitiatorGroup[$i]
             $CurrentTgtGroup = $TargetGroup[$i]
@@ -2958,7 +2962,7 @@ function Get-IntelliFlashSnapList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/listSnapshots"
 	        $postParams = "[`"$FullPath`",`".*`"]"
 			Write-Debug $postParams
@@ -2988,7 +2992,7 @@ function Get-IntelliFlashSnapList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/listSnapshots"
 	        $postParams = "[`"$FullPath`",`".*`"]"
 			Write-Debug $postParams
@@ -3019,7 +3023,7 @@ function Get-IntelliFlashSnapList {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$CurrentArray/zebi/api/$APIVer/listSnapshots"
 	        $postParams = "[`"$FullPath`",`".*`"]"
 			Write-Debug $postParams
@@ -3112,7 +3116,7 @@ function Get-IntelliFlashSnap {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$Array/zebi/api/$APIVer/listSnapshots"
 	        $postParams = "[`"$FullPath`",`".*`"]"
 			Write-Debug $postParams
@@ -3210,7 +3214,7 @@ function Add-IntelliFlashLUNSnap {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$CurrentArray/zebi/api/$APIVer/createVolumeSnapshot"
                 $CLUNName = $LUNName[0]
                 If ($Quiesce){If ($Quiesce[0] = True){$Q = "true"}Else{$Q = "false"}}
@@ -3315,7 +3319,7 @@ function Add-IntelliFlashShareSnap {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$CurrentArray/zebi/api/$APIVer/createShareSnapshot"
                 If ($Quiesce){If ($Quiesce[0] = True){$Q = "true"}Else{$Q = "false"}}
                 If ($QuiesceAll){$Q = "true"}
@@ -3406,7 +3410,7 @@ function Add-IntelliFlashProjectSnap {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$CurrentArray/zebi/api/$APIVer/createProjectSnapshot"
                 If ($Quiesce){If ($Quiesce[0] = True){$Q = "true"}Else{$Q = "false"}}
                 If ($QuiesceAll){$Q = "true"}
@@ -3496,7 +3500,7 @@ function Get-IntelliFlashSnapStatus {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $CSnapName = $SnapName[0]
                 $CPoolName = $PoolName[0]
                 $CProjectName = $ProjectName[0]
@@ -3625,7 +3629,7 @@ function Add-IntelliFlashClone {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $CSnapName = $SnapName[0]
                 $CPoolName = $PoolName[0]
                 $CProjectName = $ProjectName[0]
@@ -3770,7 +3774,7 @@ function Get-IntelliFlashProjectCloneStatus {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $CFullPath = $SnapFullPath[0]
                 $CCloneName = $CloneName[0]
                 If($PoolName){$CPoolName = $PoolName[0]}Else{$CPoolName = "N/A"}
@@ -3862,7 +3866,7 @@ function Remove-IntelliFlashSnap {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $CSnapName = $SnapName[0]
                 $CPoolName = $PoolName[0]
                 $CProjectName = $ProjectName[0]
@@ -4526,7 +4530,7 @@ function Remove-IntelliFlashProject {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $DataSetPath = "$PoolName/Local/$ProjectName"
                 $url = "https://$ArrayTgt/zebi/api/$APIVer/deleteProject"
                 $postParams = "[`"" + $DataSetPath + "`"]"
@@ -4645,7 +4649,7 @@ function Set-IntelliFlashShareProperty {
                 $Cred = $Cred.Cred
                 $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
                 $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-                If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+                If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
                 $url = "https://$CurrentArray/zebi/api/$APIVer/setSMBSharingOnShare"
                 $CShareName = $ShareName[0]
                 $CPoolName = $PoolName[0]
@@ -4729,7 +4733,7 @@ function Add-IntelliFlashProjectLUNMapping {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $CurrentArray}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 	        $url = "https://$CurrentArray/zebi/api/$APIVer/createMappingForProject"
 	        $CurrentInitGroup = $InitiatorGroup[$i]
             $CurrentTgtGroup = $TargetGroup[$i]
@@ -4831,7 +4835,7 @@ function Get-IntelliFlashReplicationStatus {
             $Cred = $Cred.Cred
             $IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $Array}|select IntelliFlashVersion
             $IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-            If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+            If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
             $url = "https://$Array/zebi/api/$APIVer/getReplicationStatus"
 	        $postParams = "[{`"projectName`":`"" + $SourceProjectName + "`",`"remoteProjectName`":`"" + $TargetProjectName + "`",`"remoteBaseDataSetName`":`"" + $TargetDataSetFullPath + "`",`"poolName`":`"" + $SourcePoolName + "`",`"lastSnapshotName`":`"" + $LastSnapshotName + "`",`"scopeOption`":" + $ReplicationScope + ",`"remoteHost`":`"" + $TargetArray + "`",`"baseDataSetName`":`"" + $SourceDataSetFullPath + "`",`"id`":" + $ReplicationIndex + ",`"projectGuid`":`"" + $ReplicationGUID + "`",`"remotePoolName`":`"" + $TargetPoolName + "`"}]"
 			Write-Debug $postParams
@@ -5305,6 +5309,11 @@ function Get-IntelliFlashProjectPropertiesList {
 				Write-Debug $postParams
 				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
 				$EachProj | Add-Member -Type NoteProperty -Name DefaultVolumeSize -Value $projProperty.propertyValue
+				Write-Verbose "Getting Project property 'DefaultVolumeSizeUnit' for '$PROJECTFULLPATH'..."
+				$postParams = "[`"$PROJECTFULLPATH`",`"defaultVolumeSizeUnit`"]"
+				Write-Debug $postParams
+				$projProperty = Invoke-RestMethod -Uri $url -Method Post -ContentType "application/json" -Headers $Cred -Body $postParams
+				$EachProj | Add-Member -Type NoteProperty -Name DefaultVolumeSizeUnit -Value $projProperty.propertyValue
 				Write-Verbose "Getting Project property 'DefaultVolumeBlockSize' for '$PROJECTFULLPATH'..."
 				$postParams = "[`"$PROJECTFULLPATH`",`"defaultVolumeBlockSize`"]"
 				Write-Debug $postParams
@@ -5444,7 +5453,7 @@ function Add-IntelliFlashProject {
 				$Cred = $Cred.Cred
 				$IntelliFlashVersion = $global:ArrayTable |Where {$_.Array -eq $ArrayTgt}|select IntelliFlashVersion
 				$IntelliFlashVersion = [double]$IntelliFlashVersion.IntelliFlashVersion.Substring(0,3)
-				If ($IntelliFlashVersion -lt 3.5){$APIVer = "v1"}else{$APIVer = "v2"}
+				If ($IntelliFlashVersion -lt 3.5.0) {$APIVer = "v1"} else {$APIVer = "v2"}
 				$url = "https://$ArrayTgt/zebi/api/$APIVer/createProject"
 				$postParams = "[{`"poolName`":`"" + $PoolName + "`", `"projectName`":`"" + $ProjectName + "`", `"intendedProtocolList`":[" +  $IPL + "], `"compression`":`"" +  $Compression + "`", `"dedup`":`"" +  $Deduplication + "`"}]"
 				Write-Debug $url
