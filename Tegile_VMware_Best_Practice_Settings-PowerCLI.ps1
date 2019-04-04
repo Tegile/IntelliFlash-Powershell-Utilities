@@ -95,15 +95,15 @@ http://www.tegile.com/
 		$ReportOnly,
 		[Parameter()]
 		[Switch]
-        $addSwInitiator,
-        [Parameter()]
-        [Switch]
-        $addDynamicIps,
-        [Parameter()]
-        [Switch]
-        $addIQNGroup,
-        [Parameter()]
-        [Switch]
+		$AddSwInitiator,
+		[Parameter()]
+		[Switch]
+		$AddDynamicIps,
+		[Parameter()]
+		[Switch]
+		$AddIQNGroup,
+		[Parameter()]
+		[Switch]
 		$SkipMaxVol,
 		[Parameter()]
 		[Switch]
@@ -145,19 +145,19 @@ http://www.tegile.com/
 		[Alias("p")]
 		[String]
 		$Password,
-        [Parameter()]
+		[Parameter()]
 		[Switch]
 		$DatastorePathCheck,
-        [Parameter()]
+		[Parameter()]
 		[Switch]
 		$RDMPathCheck,
-        [Parameter()]
+		[Parameter()]
 		[Switch]
 		$HostPathCheck,
-        [Parameter()]
+		[Parameter()]
 		[Switch]
 		$CheckIOPS,
-        [Parameter()]
+		[Parameter()]
 		[Switch]
 		$SetIOPS
 	)
@@ -165,11 +165,11 @@ http://www.tegile.com/
 # This script is supported on a best-effort only
 # Script Version:
 $MajorVer = 3
-$MinorVer = 7
+$MinorVer = 9
 $PatchVer = 1
-$BuildVer = 4
-$VerMonth = 02
-$VerDay = 09
+$BuildVer = 0
+$VerMonth = 04
+$VerDay = 03
 $VerYear = 2019
 $Author = "Ben Kendall, Ken Nothnagel, Tom Crowe, & Andrew Seifert, WD IntelliFlash Professional Services"
 
@@ -373,7 +373,7 @@ if ($PCLIVEROLD) {
 	$PCLIFULLVER = "$PCLIMAJVER.$PCLIMINVER"
     Write-Host "`nFound PowerCLI version: $PCLIFULLVER" -foregroundcolor red
 	Write-Host "Version 6.3 Release 1 or newer is required" -foregroundcolor red
-    Write-Host "`nYou can install latest version via:" -foregroundcolor yellow
+    Write-Host "`nAfter first uninstalling the current version, you can install latest version via:" -foregroundcolor yellow
     Write-Host "Find-Module -Name VMware.PowerCLI" -foregroundcolor yellow
 	Write-Host "Install-Module -Name VMware.PowerCLI -Scope AllUsers" -foregroundcolor yellow
 	Write-Host "(Can also set -Scope to CurrentUser if not running as Administrator)" -foregroundcolor yellow
@@ -430,7 +430,7 @@ if ($AddDynamicIps) {
 # vCenter or Host IP or FQDN is required for anything other than script version check, so catch if not passed via CLI and prompt for it:
 if (!$VCServer) {
 	Write-Host "`nvCenter or Host IP or FQDN is required, normally specified after -VCServer parameter." -foregroundcolor yellow
-	$VCServer = Read-Host "Please enter vCenter or Host IP or FQDN: "
+	$VCServer = Read-Host "Please enter vCenter or Host IP or FQDN"
 }
 if ($VCServer) {
 	Write-Host "`nWe'll be connecting to the specified vCenter or ESXi host: $VCServer"
@@ -441,7 +441,7 @@ if ($VCServer) {
 }
 
 
-#############ChangeLog - Andrew Seifert iSCSI Additions################
+#############ChangeLog - Andrew Seifert & Tom Crowe iSCSI Additions################
 # Added software iSCSI check and install, dynamic IP adds,
 # and IQN addition for IntelliFlash array including initiator group creation
 #
@@ -460,7 +460,7 @@ function AddIscsiInitiator {
     } else {
         Write-Host "`nIt appears the software iSCSI Software Adapter is not installed.  IntelliFlash arrays require this for iSCSI connection."
 
-		$shell = Read-Host "`nWould you like to install? (default is no) (y/n)"
+	$shell = Read-Host "`nWould you like to install? (default is no) (y/n)"
 
         If ( $shell -eq "y" ) {
     
@@ -474,7 +474,7 @@ function AddIscsiInitiator {
 		while(($verify -eq $false) -and ($loop -lt 6)){
 			Start-Sleep -Seconds 5
 			$loop++
-			$verify = Get-VMHostStorage | Select-Object SoftwareIScsiEnabled
+			$verify = Get-VMHostStorage -VMHost $VMHost | Select-Object SoftwareIScsiEnabled
 			Write-Host "Verifying the iSCSI Software Adapter is installed" -ForegroundColor Green
 			if ($verify) { Write-Host "Verified!" }
 			$HOSTREPORT += "Software iSCSI Adapter was installed"
@@ -492,9 +492,9 @@ function AddIscsiInitiator {
 
 function ArrayInfo {
 
-    $global:array = Read-Host "`nPlease enter your array ip: "
-    $global:arrUser = Read-Host "Please enter the array user: "
-    $global:arrPasswd = Read-Host "Please enter your array password: "
+    $global:array = Read-Host "`nPlease enter your IntelliFlash Array Management IP"
+    $global:arrUser = Read-Host "Please enter the IntelliFlash User"
+    $global:arrPasswd = Read-Host "Please enter the IntelliFlash Password"
 	###----can be set if you want below------#
     #$global:array = ""
     #$global:arrUser = ""
@@ -588,16 +588,14 @@ function AddIQNs() {
         Write-Host "`nPlease type in group to use or create a new group by entering the name you wish to use. `nNote that special characters, spaces, and underscores are not allowed" -ForegroundColor Green
         
 		do {
-			$newGrp = Read-Host "Enter Initiator Group Name"
-		} while (
-			$newGrp -notmatch '[^a-zA-Z0-9"-"]'
-		)
+			$initGrpName = Read-Host "Enter the name"
+		} until ($initGrpName.Trim() -match '^[a-zA-Z0-9-]+$')
 		
         #for ease of mind - validation check for init group
-        if ($initGrpArr -match $newGrp) {
-            Write-Host "`nUsing $newGrp for IQN additions" -ForegroundColor Green
+        if ($initGrpArr -match $initGrpName) {
+            Write-Host "`nUsing $initGrpName for IQN additions" -ForegroundColor Green
         } else {
-            Write-Host "The group does not currently exist.  Creating new group" -ForegroundColor Green
+            Write-Host "The group does not currently exist, creating new group..." -ForegroundColor Green
         }
 
         #validate and add our IQNs to array
@@ -609,21 +607,21 @@ function AddIQNs() {
         #add our iqns to the initgroup chosen 
     
         #add our options for this request
-        $opts = "[`"$hostIqn`", `"$newGrp`"]"
+        $opts = "[`"$hostIqn`", `"$initGrpName`"]"
         $restReqAdd = Invoke-RestMethod -Method $methodAdd -Headers $header -Uri $urlAddToGrp -Body $opts
     
-        Write-Host "`nAdded IQNs to $newGrp" -ForegroundColor Green
+        Write-Host "`nAdded IQNs to $initGrpName" -ForegroundColor Green
 	}
 }
 
 function AddDynamicIPs {
 
 	$ipArr = @()
-    #verify the software adapter
-    $hba = Get-VMHostHba -VMHost $VMHost | Select-Object VMHost,IScsiName,Model | Where {$_.Model -eq "iSCSI Software Adapter"}
-    Write-Host "`nAdd IP Targets to Dynamic Discovery on VMware Software iSCSI Initiator for host:" $VMHost.Name -ForegroundColor Green
-    
-    #get ips for target to add to vmware
+	#verify the software adapter
+	$hba = Get-VMHostHba -VMHost $VMHost | Select-Object VMHost,IScsiName,Model | Where {$_.Model -eq "iSCSI Software Adapter"}
+	Write-Host "`nAdd IP Targets to Dynamic Discovery on VMware Software iSCSI Initiator for host:" $VMHost.Name -ForegroundColor Green
+
+	#get ips for target to add to vmware
 	$ipArr = @()
 	$targetIpArr = @()
 
@@ -670,7 +668,7 @@ function AddDynamicIPs {
 		Write-Host	"Skipping IP additions...."
 	}
 }
-######################## End Andrew Seifert iSCSI additions #####################
+######################## End Andrew Seifert & Tom Crowe iSCSI additions #####################
 
 
 # Disconnect any existing vCenter sessions (thus forcing re-login every time script is run):
@@ -716,11 +714,11 @@ if ($Cluster) {
 Write-Host "`nHere are the hosts we'll be touching:`n"
 foreach ($VMHost in $VMHosts) {$VMHost.Name}
 
-### Andrew Seifert iSCSI additions ###
-if ($addIQNGroup) { arrayInfo }
-### End Andrew Seifert iSCSI additions ###
+### Andrew Seifert & Tom Crowe iSCSI additions ###
+if (($addIQNGroup) -and (!$ReportOnly)) { arrayInfo }
+### End Andrew Seifert & Tom Crowe iSCSI additions ###
 
-# Loop through hosts one at at time and apply settings and install Tegile NAS VAAI host extension:
+# Loop through hosts one at at time to check/apply settings:
 foreach ($VMHost in $VMHosts) {
 	
 	# Check that host connection state is Connected or Maintenance, not Disconnected or NotResponding
@@ -739,24 +737,27 @@ foreach ($VMHost in $VMHosts) {
 	$IOPSREPORT = @()
 	$HostVersion = ([version]$VMHost.Version)
 
-	### Andrew Seifert iSCSI additions ###
-    #Add iscsi Software adapter to the host
-    if ($addSwInitiator) {
-        addIscsiInitiator
-    }
+	### Andrew Seifert & Tom Crowe iSCSI additions ###
+	#Add iSCSI Software adapter to the host
+	if (($addSwInitiator) -and (!$ReportOnly)) {
+		Write-Host "`nAdding Software iSCSI Initiator to host:" $VMHost
+		addIscsiInitiator
+	}
 
-    #Add IQNs to the Tegile
-    if ($addIQNGroup) {
+	#Add IQNs to the Tegile
+	if (($addIQNGroup) -and (!$ReportOnly)) {
+		Write-Host "`nAdding IQN to IntelliFlash array for host:" $VMHost
 		#need to see about checking for initiator again - or letting it sleep.....
 		sleep 5
-        addIQNs
-    }
+		addIQNs
+	}
 
-    #Add dynamic IPs
-    if ($addDynamicIps) {
-        addDynamicIps
-    }
-	### End Andrew Seifert iSCSI additions ###
+	#Add dynamic IPs
+	if (($addDynamicIps -and (!$ReportOnly))) {
+		Write-Host "`nAdding Dynamic Discovery IP(s) to host:" $VMHost
+		addDynamicIps
+	}
+	### End Andrew Seifert & Tom Crowe iSCSI additions ###
 
 	if ($DatastorePathCheck -or $RDMPathCheck -or $HostPathCheck -or $SetIOPS -or $CheckIOPS) {
 		if ($HostVersion.Major -lt 6) {
