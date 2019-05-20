@@ -167,9 +167,9 @@ http://www.tegile.com/
 $MajorVer = 3
 $MinorVer = 9
 $PatchVer = 1
-$BuildVer = 0
-$VerMonth = 04
-$VerDay = 03
+$BuildVer = 1
+$VerMonth = 05
+$VerDay = 17
 $VerYear = 2019
 $Author = "Ben Kendall, Ken Nothnagel, Tom Crowe, & Andrew Seifert, WD IntelliFlash Professional Services"
 
@@ -1139,6 +1139,8 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "`n`nFound the following existing Tegile IntelliFlash SATP rules:`n"
 			$satprules
 			foreach ($rule in $satprules) {
+				$systemaluarule = ""
+				$systemnonaluarule = ""
 				Write-Host "`n---------------------------------------------------------------------"
 				Write-Host "`nChecking rule:"
 				$rule
