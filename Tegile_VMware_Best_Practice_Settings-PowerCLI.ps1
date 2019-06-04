@@ -166,10 +166,10 @@ http://www.tegile.com/
 # Script Version:
 $MajorVer = 3
 $MinorVer = 9
-$PatchVer = 1
-$BuildVer = 1
+$PatchVer = 2
+$BuildVer = 0
 $VerMonth = 05
-$VerDay = 17
+$VerDay = 23
 $VerYear = 2019
 $Author = "Ben Kendall, Ken Nothnagel, Tom Crowe, & Andrew Seifert, WD IntelliFlash Professional Services"
 
@@ -1139,21 +1139,26 @@ foreach ($VMHost in $VMHosts) {
 			Write-Host "`n`nFound the following existing Tegile IntelliFlash SATP rules:`n"
 			$satprules
 			foreach ($rule in $satprules) {
-				$systemaluarule = ""
-				$systemnonaluarule = ""
+				$thisissystemrule = "No"
 				Write-Host "`n---------------------------------------------------------------------"
 				Write-Host "`nChecking rule:"
 				$rule
 
 				# Check to see if it's a pre-installed rule in the 'system' rule group:
 				if (($rule.Description -eq "Tegile arrays with ALUA support") -and ($rule.RuleGroup -eq "system")) {
-					Write-Host "`nThis is the current ALUA rule, used only for IntelliFlash LUN's without ALUA support"
+					Write-Host "`nThis is the current ALUA rule, used only for IntelliFlash LUN's with ALUA support"
 					Write-Host "`nThis SATP rule is pre-installed in the 'system' rule group and cannot be changed or removed" -foregroundcolor yellow
 					if (($rule.Name -ne "VMW_SATP_ALUA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_on")) {
 						Write-Host "`nThis rule doesn't precisely match our current preferences, but since it's in the 'system' rule group `n we'll leave it in place and if necessary just add new ALUA rule to 'user' rule group to override it" -foregroundcolor yellow
 						$changerequired = "No"
 						$systemaluarule = "Yes"
 						$tegilealuarule = 1
+						$thisissystemrule = "Yes"
+					} else {
+						Write-Host "`nThis existing rule looks good" -foregroundcolor green
+						$changerequired = "No"
+						$systemaluarule = "Yes"
+						$tegilealuarule = 0
 					}
 					$currentsatp = New-Object -TypeName PSObject
 					$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
@@ -1170,6 +1175,12 @@ foreach ($VMHost in $VMHosts) {
 						$changerequired = "No"
 						$systemnonaluarule = "Yes"
 						$tegilenonaluarule = 1
+						$thisissystemrule = "Yes"
+					} else {
+						Write-Host "`nThis existing rule looks good" -foregroundcolor green
+						$changerequired = "No"
+						$systemnonaluarule = "Yes"
+						$tegilenonaluarule = 0
 					}
 					$currentsatp = New-Object -TypeName PSObject
 					$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
@@ -1178,7 +1189,6 @@ foreach ($VMHost in $VMHosts) {
 					$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
 					$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 				}
-				
 				if (($rule.Description -eq "Tegile arrays with ALUA support") -and ($rule.RuleGroup -ne "system")) {
 					Write-Host "`nThis is the current ALUA rule, used only for IntelliFlash LUN's with ALUA support"
 					if (($rule.Name -ne "VMW_SATP_ALUA") -or ($rule.Model -ne "INTELLIFLASH") -or ($rule.DefaultPSP -ne "VMW_PSP_RR") -or ($rule.PSPOptions -ne $iopsparam) -or ($rule.ClaimOptions -ne "tpgs_on")) {
@@ -1264,7 +1274,7 @@ foreach ($VMHost in $VMHosts) {
 				}
 				$HOSTREPORT += $currentsatp
 				
-				if (($changerequired -eq "Yes") -and (!$ReportOnly) -and ($systemaluarule -ne "Yes") -and ($systemnonaluarule -ne "Yes")) {
+				if (($changerequired -eq "Yes") -and (!$ReportOnly) -and ($thisissystemrule -ne "Yes")) {
 					$satpparams = $esxcli.storage.nmp.satp.rule.remove.createArgs()
 					$satpparams.model = $rule.Model
 					$satpparams.vendor = $rule.Vendor
@@ -1288,10 +1298,33 @@ foreach ($VMHost in $VMHosts) {
 		
 		# Reporting if any individual rules are missing:
 		Write-Host "`n---------------------------------------------------------------------"
-		Write-Host "Checking to see if any SATP rules are missing..."
-		if ($satprules.Description -notcontains "Tegile arrays with ALUA support") {
+		Write-Host "Checking to see if any SATP rules are missing altogether..."
+		$missingalua = "true"
+		$missingnonalua = "true"
+		if ($LegacySATP) {
+			$missinglegacyfc = "true"
+			$missinglegacyiscsi = "true"
+		} else {
+			$missinglegacyfc = "false"
+			$missinglegacyiscsi = "false"
+		}
+		foreach ($rule in $satprules) {
+			if (($satprules.Description -eq "Tegile arrays with ALUA support") -and ($tegilealuarule -ne 1)) {
+				$missingalua = "false"
+			}
+			if (($satprules.Description -eq "Tegile arrays without ALUA support") -and ($tegilenonaluarule -ne 1)) {
+				$missingnonalua = "false"
+			}
+			if (($satprules.Description -eq "Tegile Zebi FC") -and ($tegilelegacyfc -ne 1)) {
+				$missinglegacyfc = "false"
+			}
+			if (($satprules.Description -eq "Tegile Zebi iSCSI") -and ($tegilelegacyiscsi -ne 1)) {
+				$missinglegacyiscsi = "false"
+			}
+		}
+		
+		if (($missingalua -eq "true") -and ($systemaluarule -ne "Yes")) {
 			Write-Host "`nThe current ALUA rule is missing" -foregroundcolor red
-			$tegilealuarule = "1"
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
@@ -1300,20 +1333,20 @@ foreach ($VMHost in $VMHosts) {
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 			$HOSTREPORT += $currentsatp
-		} elseif (($systemaluarule -eq "Yes") -and ($tegilealuarule -eq "1")) {
+		} 
+		if (($missingalua -eq "true") -and ($systemaluarule -eq "Yes")) {
 			Write-Host "`nThe current ALUA rule with settings specified is missing from the 'user' rule group" -foregroundcolor red
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
 			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP ALUA rule with specified settings"
-			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing from 'user' rule group for override of 'system' rule group"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_ALUA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_on; Description=Tegile arrays with ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 			$HOSTREPORT += $currentsatp
 		}
-		if ($satprules.Description -notcontains "Tegile arrays without ALUA support") {
+		if (($missingnonalua -eq "true") -and ($systemnonaluarule -ne "Yes")) {
 			Write-Host "`nThe current non-ALUA rule is missing" -foregroundcolor red
-			$tegilenonaluarule = "1"
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
@@ -1322,20 +1355,20 @@ foreach ($VMHost in $VMHosts) {
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 			$HOSTREPORT += $currentsatp
-		} elseif (($systemnonaluarule -eq "Yes") -and ($tegilenonaluarule -eq "1")) {
+		} 
+		if (($missingnonalua -eq "true") -and ($systemnonaluarule -eq "Yes")) {
 			Write-Host "`nThe current non-ALUA rule with settings specified is missing from the 'user' rule group" -foregroundcolor red
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
 			$currentsatp | Add-Member -Type NoteProperty -Name "Setting" -Value "Current Tegile SATP Non-ALUA rule with specified settings"
-			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing"
+			$currentsatp | Add-Member -Type NoteProperty -Name "Current Value" -Value "missing from 'user' rule group for override of 'system' rule group"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Script value" -Value "@{Vendor=TEGILE; Model=INTELLIFLASH; Name=VMW_SATP_DEFAULT_AA; DefaultPSP=VMW_PSP_RR; ClaimOptions=tpgs_off; Description=Tegile arrays without ALUA support; PSPOptions=$iopsparam}"
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 			$HOSTREPORT += $currentsatp
 		}
-		if (($satprules.Description -notcontains "Tegile Zebi FC") -and ($LegacySATP)) {
+		if ($missinglegacyfc -eq "true") {
 			Write-Host "`nThe Legacy FC rule is missing" -foregroundcolor red
-			$tegilelegacyfc = "1"
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
@@ -1345,9 +1378,8 @@ foreach ($VMHost in $VMHosts) {
 			$currentsatp | Add-Member -Type NoteProperty -Name "Change Required" -Value $changerequired
 			$HOSTREPORT += $currentsatp
 		}
-		if (($satprules.Description -notcontains "Tegile Zebi iSCSI") -and ($LegacySATP)) {
+		if ($missinglegacyiscsi -eq "true") {
 			Write-Host "`nThe Legacy iSCSI rule is missing" -foregroundcolor red
-			$tegilelegacyiscsi = "1"
 			$changerequired = "Yes"
 			$currentsatp = New-Object -TypeName PSObject
 			$currentsatp | Add-Member -Type NoteProperty -Name "Host" -Value $VMHost
