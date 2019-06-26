@@ -165,11 +165,11 @@ http://www.tegile.com/
 # This script is supported on a best-effort only
 # Script Version:
 $MajorVer = 3
-$MinorVer = 9
-$PatchVer = 2
+$MinorVer = 10
+$PatchVer = 0
 $BuildVer = 0
-$VerMonth = 05
-$VerDay = 23
+$VerMonth = 06
+$VerDay = 25
 $VerYear = 2019
 $Author = "Ben Kendall, Ken Nothnagel, Tom Crowe, & Andrew Seifert, WD IntelliFlash Professional Services"
 
@@ -183,13 +183,13 @@ $VerMonthName = (Get-Culture).DateTimeFormat.GetAbbreviatedMonthName($VerMonth)
 
 
 # Specify the currrent Tegile NAS VAAI Host Extension (aka "Plugin") version:
-$tegilepluginversion = "1.0-15.70"
+$tegilepluginversion = "1.0-15.71"
 
 
 # Specify the depot path for the Tegile NAS VAAI Host Extension
 # Note that you can change to format "file:/path/to/tgl-vaai-nas-plugin.zip" if it's on storage mounted on the host (required if host doesn't have Internet access)
-# Example of local file path:  $depotpath = "file:/vmfs/volumes/Datastore01/patches/tgl-vaai-nas-plugin_1.0-15.70---3.7.1.0.zip"
-$depotpath = "http://s1.tegile.com/ps/vmware/tgl-vaai-nas-plugin_1.0-15.70---3.7.1.0"
+# Example of local file path:  $depotpath = "file:/vmfs/volumes/Datastore01/patches/tgl-vaai-nas-plugin_1.0-15.71---3.10.0.0.zip"
+$depotpath = "http://s1.tegile.com/ps/vmware/tgl-vaai-nas-plugin_1.0-15.71---3.10.0.0"
 
 
 # NFS Settings, Queue Depth is adjustable per your needs, leave the others unless you know what you're doing:
